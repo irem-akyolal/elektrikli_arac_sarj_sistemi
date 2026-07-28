@@ -1,4 +1,4 @@
-package com.proje.elektrikli_arac_sarj_sistemi.test;
+/*package com.proje.elektrikli_arac_sarj_sistemi.test;
 
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.*;
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.*;
@@ -51,3 +51,4 @@ public class repositoryTest {
         };
     }
 }
+*/
