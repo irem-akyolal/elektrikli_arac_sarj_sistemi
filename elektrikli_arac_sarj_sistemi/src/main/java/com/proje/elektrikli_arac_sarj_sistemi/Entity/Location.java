@@ -2,6 +2,7 @@ package com.proje.elektrikli_arac_sarj_sistemi.Entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.ArrayList;
@@ -11,6 +12,7 @@ import java.util.List;
 @Table(name = "locations")
 @Getter
 @Setter
+@NoArgsConstructor 
 public class Location extends BaseEntity {
 
     @Column(nullable = false, unique = true)

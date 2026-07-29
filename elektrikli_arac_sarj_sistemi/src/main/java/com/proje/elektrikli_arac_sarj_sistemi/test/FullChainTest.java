@@ -1,4 +1,4 @@
-package com.proje.elektrikli_arac_sarj_sistemi.test;
+/*package com.proje.elektrikli_arac_sarj_sistemi.test;
 
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.*;
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.*;
@@ -117,4 +117,4 @@ public class FullChainTest {
             System.out.println("--- TAM ZİNCİR (Location → Evse → Connector → Session → Provision → Payment → Invoice) BAŞARIYLA OLUŞTU ---");
         };
     }
-}
+} */

@@ -4,6 +4,7 @@ import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.PaymentProviderType;
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
@@ -17,6 +18,7 @@ import java.math.BigDecimal;
 )
 @Getter
 @Setter
+@NoArgsConstructor 
 public class Payment extends BaseEntity {
 
     @OneToOne(fetch = FetchType.LAZY)

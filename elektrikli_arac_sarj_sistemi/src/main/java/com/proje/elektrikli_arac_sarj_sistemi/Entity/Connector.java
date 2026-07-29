@@ -5,6 +5,7 @@ import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.ConnectorStandard;
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.PowerType;
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
@@ -13,6 +14,7 @@ import java.math.BigDecimal;
 @Table(name = "connectors")
 @Getter
 @Setter
+@NoArgsConstructor 
 public class Connector extends BaseEntity {
 
     @Column(nullable = false, unique = true)

@@ -3,6 +3,7 @@ package com.proje.elektrikli_arac_sarj_sistemi.Entity;
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.AdminRole;
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
@@ -11,6 +12,7 @@ import java.time.LocalDateTime;
 @Table(name = "admin_users")
 @Getter
 @Setter
+@NoArgsConstructor 
 public class AdminUser extends BaseEntity {
 
     @Column(nullable = false, unique = true)

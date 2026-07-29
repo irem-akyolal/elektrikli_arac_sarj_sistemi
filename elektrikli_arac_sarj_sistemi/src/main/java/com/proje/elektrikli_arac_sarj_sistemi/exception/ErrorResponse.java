@@ -1,6 +1,7 @@
 package com.proje.elektrikli_arac_sarj_sistemi.exception;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 public class ErrorResponse {
 
@@ -9,19 +10,27 @@ public class ErrorResponse {
     private final String errorCode;
     private final String message;
     private final String path;
+    private final Map<String, String> fieldErrors; // sadece validation hatalarında dolu, diğerlerinde null
 
+    // Genel hatalar için (fieldErrors olmadan)
     public ErrorResponse(int status, String errorCode, String message, String path) {
+        this(status, errorCode, message, path, null);
+    }
+
+    // Validation hataları için (fieldErrors ile)
+    public ErrorResponse(int status, String errorCode, String message, String path, Map<String, String> fieldErrors) {
         this.timestamp = LocalDateTime.now();
         this.status = status;
         this.errorCode = errorCode;
         this.message = message;
         this.path = path;
+        this.fieldErrors = fieldErrors;
     }
 
-    // getter'lar
     public LocalDateTime getTimestamp() { return timestamp; }
     public int getStatus() { return status; }
     public String getErrorCode() { return errorCode; }
     public String getMessage() { return message; }
     public String getPath() { return path; }
+    public Map<String, String> getFieldErrors() { return fieldErrors; }
 }

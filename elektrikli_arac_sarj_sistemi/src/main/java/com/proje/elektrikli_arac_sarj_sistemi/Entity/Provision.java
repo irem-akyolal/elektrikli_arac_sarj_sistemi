@@ -3,6 +3,7 @@ package com.proje.elektrikli_arac_sarj_sistemi.Entity;
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.ProvisionStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
@@ -12,6 +13,7 @@ import java.time.LocalDateTime;
 @Table(name = "provisions")
 @Getter
 @Setter
+@NoArgsConstructor 
 public class Provision extends BaseEntity {
 
     @OneToOne(fetch = FetchType.LAZY)

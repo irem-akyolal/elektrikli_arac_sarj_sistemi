@@ -3,6 +3,7 @@ package com.proje.elektrikli_arac_sarj_sistemi.Entity;
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.SessionStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
@@ -19,6 +20,7 @@ import java.time.LocalDateTime;
 )
 @Getter
 @Setter
+@NoArgsConstructor 
 public class ChargingSession extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)

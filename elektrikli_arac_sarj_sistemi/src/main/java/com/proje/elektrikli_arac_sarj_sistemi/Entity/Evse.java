@@ -3,6 +3,7 @@ package com.proje.elektrikli_arac_sarj_sistemi.Entity;
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.EvseStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.ArrayList;
@@ -12,6 +13,7 @@ import java.util.List;
 @Table(name = "evses")
 @Getter
 @Setter
+@NoArgsConstructor 
 public class Evse extends BaseEntity {
 
     @Column(nullable = false, unique = true)
