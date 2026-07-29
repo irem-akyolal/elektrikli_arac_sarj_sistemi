@@ -50,7 +50,7 @@ public class LocationService {
     // Public website için — sadece aktif istasyonlar
     return locationRepository.findAllByActiveTrue()
             .stream()
-            .map(locationMapper::toResponse)
+            .map(locationMapper::toResponse) // Her bir entity'yi DTO'ya dönüştürür.
             .toList();
 }
 

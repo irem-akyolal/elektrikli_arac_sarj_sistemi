@@ -1,0 +1,89 @@
+package com.proje.elektrikli_arac_sarj_sistemi.service;
+
+import com.proje.elektrikli_arac_sarj_sistemi.Entity.Evse;
+import com.proje.elektrikli_arac_sarj_sistemi.Entity.Location;
+import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.EvseStatus;
+import com.proje.elektrikli_arac_sarj_sistemi.Repository.EvseRepository;
+import com.proje.elektrikli_arac_sarj_sistemi.Repository.LocationRepository;
+import com.proje.elektrikli_arac_sarj_sistemi.dto.evse.EvseCreateRequest;
+import com.proje.elektrikli_arac_sarj_sistemi.dto.evse.EvseResponse;
+import com.proje.elektrikli_arac_sarj_sistemi.exception.BusinessRuleViolationException;
+import com.proje.elektrikli_arac_sarj_sistemi.exception.ResourceNotFoundException;
+import com.proje.elektrikli_arac_sarj_sistemi.mapper.EvseMapper;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.UUID;
+
+@Service
+public class EvseService {
+
+    private final EvseRepository evseRepository;
+    private final LocationRepository locationRepository;
+    private final EvseMapper evseMapper;
+
+    public EvseService(EvseRepository evseRepository,
+                        LocationRepository locationRepository,
+                        EvseMapper evseMapper) {
+        this.evseRepository = evseRepository;
+        this.locationRepository = locationRepository;
+        this.evseMapper = evseMapper;
+    }
+
+    @Transactional
+    public EvseResponse create(EvseCreateRequest request) {
+        validateOcpiEvseUid(request.getOcpiEvseUid());
+
+        Location location = locationRepository.findById(request.getLocationId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "İstasyon bulunamadı: " + request.getLocationId()));
+
+        Evse evse = new Evse();
+        evse.setOcpiEvseUid(request.getOcpiEvseUid());
+        evse.setEvseId(request.getEvseId());
+        evse.setLocation(location);
+        evse.setStatus(EvseStatus.AVAILABLE); // yeni EVSE varsayılan olarak müsait başlıyor — iş kararı, burada
+
+        Evse saved = evseRepository.save(evse);
+        return evseMapper.toResponse(saved);
+    }
+
+    public EvseResponse getById(UUID id) {
+        Evse evse = findEvse(id);
+        return evseMapper.toResponse(evse);
+    }
+
+    public List<EvseResponse> getByLocationId(UUID locationId) {
+        return evseRepository.findByLocationId(locationId)
+                .stream()
+                .map(evseMapper::toResponse)
+                .toList();
+    }
+
+    @Transactional
+    public EvseResponse updateStatus(UUID id, EvseStatus newStatus) {
+        Evse evse = findEvse(id);
+        evse.setStatus(newStatus);
+        Evse saved = evseRepository.save(evse);
+        return evseMapper.toResponse(saved);
+    }
+
+    // ============================
+    // Private Methods
+    // ============================
+
+    private void validateOcpiEvseUid(String ocpiEvseUid) {
+        if (evseRepository.existsByOcpiEvseUid(ocpiEvseUid)) {
+            throw new BusinessRuleViolationException(
+                    "EVSE_ALREADY_EXISTS",
+                    "Bu OCPI EVSE UID zaten kayıtlı: " + ocpiEvseUid
+            );
+        }
+    }
+
+    private Evse findEvse(UUID id) {
+        return evseRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("EVSE bulunamadı: " + id));
+    }
+}

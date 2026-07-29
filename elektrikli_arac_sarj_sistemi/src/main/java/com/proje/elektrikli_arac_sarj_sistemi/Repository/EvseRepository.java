@@ -11,5 +11,7 @@ public interface EvseRepository extends JpaRepository<Evse, UUID> {
 
     Optional<Evse> findByOcpiEvseUid(String ocpiEvseUid);
 
+    boolean existsByOcpiEvseUid(String ocpiEvseUid);
+
     List<Evse> findByLocationId(UUID locationId);
 }

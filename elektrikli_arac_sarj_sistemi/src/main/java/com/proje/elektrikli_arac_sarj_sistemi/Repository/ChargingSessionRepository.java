@@ -18,6 +18,8 @@ public interface ChargingSessionRepository extends JpaRepository<ChargingSession
     // Scheduler için: şu an aktif (devam eden) tüm session'ları bulmak
     List<ChargingSession> findByStatus(SessionStatus status);
 
+    List<ChargingSession> findByConnectorId(UUID connectorId);
+
     // Admin panel — durum bazlı, sayfalı listeleme
     Page<ChargingSession> findByStatus(SessionStatus status, Pageable pageable);
 

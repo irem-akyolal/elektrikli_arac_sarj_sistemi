@@ -11,5 +11,7 @@ public interface ConnectorRepository extends JpaRepository<Connector, UUID> {
 
     Optional<Connector> findByOcpiConnectorId(String ocpiConnectorId);
 
+    boolean existsByOcpiConnectorId(String ocpiConnectorId);
+
     List<Connector> findByEvseId(UUID evseId);
 }
