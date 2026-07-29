@@ -27,6 +27,16 @@ public class ChargingSessionController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @PatchMapping("/{id}/charging")
+public ResponseEntity<ChargingSessionResponse> markAsCharging(@PathVariable UUID id) {
+    return ResponseEntity.ok(chargingSessionService.markAsCharging(id));
+}
+
+@PatchMapping("/{id}/connector-removed")
+public ResponseEntity<ChargingSessionResponse> markConnectorRemoved(@PathVariable UUID id) {
+    return ResponseEntity.ok(chargingSessionService.markConnectorRemoved(id));
+}
+
     @GetMapping("/{id}")
     public ResponseEntity<ChargingSessionResponse> getById(@PathVariable UUID id) {
         return ResponseEntity.ok(chargingSessionService.getById(id));

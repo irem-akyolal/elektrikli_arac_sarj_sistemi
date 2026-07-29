@@ -66,24 +66,71 @@ public ChargingSessionResponse startSession(ChargingSessionStartRequest request)
         return chargingSessionMapper.toResponse(session);
     }
 
-    @Transactional
-    public ChargingSessionResponse completeSession(UUID id, java.math.BigDecimal energyConsumedKwh) {
-        ChargingSession session = findSession(id);
+@Transactional
+public ChargingSessionResponse completeSession(UUID id, java.math.BigDecimal energyConsumedKwh) {
+    ChargingSession session = findSession(id);
 
-        if (session.getStatus() != SessionStatus.STARTED && session.getStatus() != SessionStatus.CHARGING) {
-            throw new BusinessRuleViolationException(
-                    "INVALID_SESSION_STATUS",
-                    "Sadece aktif oturumlar tamamlanabilir. Şu anki durum: " + session.getStatus()
-            );
-        }
-
-        session.setStatus(SessionStatus.COMPLETED);
-        session.setCompletedAt(LocalDateTime.now());
-        session.setEnergyConsumedKwh(energyConsumedKwh);
-
-        ChargingSession saved = chargingSessionRepository.save(session);
-        return chargingSessionMapper.toResponse(saved);
+    if (session.getStatus() != SessionStatus.STARTED && session.getStatus() != SessionStatus.CHARGING) {
+        throw new BusinessRuleViolationException(
+                "INVALID_SESSION_STATUS",
+                "Sadece aktif oturumlar tamamlanabilir. Şu anki durum: " + session.getStatus()
+        );
     }
+
+    session.setStatus(SessionStatus.COMPLETED);
+    session.setCompletedAt(LocalDateTime.now());
+    session.setEnergyConsumedKwh(energyConsumedKwh);
+    ChargingSession saved = chargingSessionRepository.save(session);
+
+    // EVSE artık "müsait" değil, "fişin çekilmesi bekleniyor" durumunda
+    Evse evse = session.getConnector().getEvse();
+    evse.setStatus(EvseStatus.PENDING_REMOVAL);
+    evseRepository.save(evse);
+
+    return chargingSessionMapper.toResponse(saved);
+}
+
+
+
+
+@Transactional
+public ChargingSessionResponse markAsCharging(UUID id) {
+    ChargingSession session = findSession(id);
+
+    if (session.getStatus() != SessionStatus.STARTED) {
+        throw new BusinessRuleViolationException(
+                "INVALID_SESSION_STATUS",
+                "Sadece STARTED durumundaki oturumlar CHARGING durumuna geçebilir. Şu anki durum: " + session.getStatus()
+        );
+    }
+
+    session.setStatus(SessionStatus.CHARGING);
+    ChargingSession saved = chargingSessionRepository.save(session);
+    return chargingSessionMapper.toResponse(saved);
+}
+
+
+@Transactional
+public ChargingSessionResponse markConnectorRemoved(UUID id) {
+    ChargingSession session = findSession(id);
+
+    if (session.getStatus() != SessionStatus.COMPLETED) {
+        throw new BusinessRuleViolationException(
+                "INVALID_SESSION_STATUS",
+                "Sadece COMPLETED durumundaki oturumlarda konnektör çıkarma işlemi yapılabilir. Şu anki durum: " + session.getStatus()
+        );
+    }
+
+    session.setConnectorRemovedAt(LocalDateTime.now());
+    session.setStatus(SessionStatus.CLOSED); // hatırlarsın, SessionStatus'te CLOSED zaten vardı
+    ChargingSession saved = chargingSessionRepository.save(session);
+
+    Evse evse = session.getConnector().getEvse();
+    evse.setStatus(EvseStatus.AVAILABLE); // artık gerçekten müsait
+    evseRepository.save(evse);
+
+    return chargingSessionMapper.toResponse(saved);
+}
 
     // ============================
     // Private Methods
