@@ -4,12 +4,13 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
 import java.util.UUID;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class LocationResponse {
+public class LocationDetailResponse {
 
     private UUID id;
     private String ocpiLocationId;
@@ -22,4 +23,5 @@ public class LocationResponse {
     private Double longitude;
     private String timeZone;
     private boolean active;
+    private List<ConnectorSummary> connectors;
 }
