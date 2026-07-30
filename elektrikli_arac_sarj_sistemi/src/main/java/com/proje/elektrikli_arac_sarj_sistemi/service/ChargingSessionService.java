@@ -3,11 +3,13 @@ package com.proje.elektrikli_arac_sarj_sistemi.service;
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.ChargingSession;
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.Connector;
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.Evse;
+import com.proje.elektrikli_arac_sarj_sistemi.Entity.Provision;
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.EvseStatus;
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.SessionStatus;
 import com.proje.elektrikli_arac_sarj_sistemi.Repository.ChargingSessionRepository;
 import com.proje.elektrikli_arac_sarj_sistemi.Repository.ConnectorRepository;
 import com.proje.elektrikli_arac_sarj_sistemi.Repository.EvseRepository;
+import com.proje.elektrikli_arac_sarj_sistemi.Repository.ProvisionRepository;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.session.ChargingSessionResponse;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.session.ChargingSessionStartRequest;
 import com.proje.elektrikli_arac_sarj_sistemi.exception.BusinessRuleViolationException;
@@ -25,16 +27,23 @@ public class ChargingSessionService {
     private final ChargingSessionRepository chargingSessionRepository;
     private final ConnectorRepository connectorRepository;
     private final EvseRepository evseRepository;
+     private final ProvisionRepository provisionRepository;
     private final ChargingSessionMapper chargingSessionMapper;
+     private final PaymentService paymentService; // otomatik tahsilat için
 
     public ChargingSessionService(ChargingSessionRepository chargingSessionRepository,
                                    ConnectorRepository connectorRepository,
                                    EvseRepository evseRepository,
-                                   ChargingSessionMapper chargingSessionMapper) {
+                                   ProvisionRepository provisionRepository,
+                                   ChargingSessionMapper chargingSessionMapper,
+                                   PaymentService paymentService) {
         this.chargingSessionRepository = chargingSessionRepository;
         this.connectorRepository = connectorRepository;
         this.evseRepository= evseRepository;
+        this.provisionRepository = provisionRepository;
         this.chargingSessionMapper = chargingSessionMapper;
+        this.paymentService = paymentService;
+
     }
 
   @Transactional
@@ -125,7 +134,7 @@ public ChargingSessionResponse markConnectorRemoved(UUID id) {
         );
     }
 
-    
+
 
     session.setConnectorRemovedAt(LocalDateTime.now());
     session.setStatus(SessionStatus.CLOSED); // hatırlarsın, SessionStatus'te CLOSED zaten vardı
@@ -135,7 +144,13 @@ public ChargingSessionResponse markConnectorRemoved(UUID id) {
     evse.setStatus(EvseStatus.AVAILABLE); // artık gerçekten müsait
     evseRepository.save(evse);
 
-    return chargingSessionMapper.toResponse(saved);
+    // Otomatik akış: bu session'a bağlı provizyonu bul, tahsilatı otomatik tetikle
+        Provision provision = provisionRepository.findByChargingSessionId(session.getId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Bu oturuma bağlı provizyon bulunamadı: " + session.getId()));
+        paymentService.captureForProvision(provision.getId());
+
+        return chargingSessionMapper.toResponse(saved);
 }
 
     // ============================
