@@ -19,4 +19,11 @@ public class MockPaymentProviderClient implements PaymentProviderClient {
     public void closeProvision(String providerReferenceId) {
         // Mock: gerçek kapatma isteği atmıyoruz, sadece log'a yazabiliriz (opsiyonel)
     }
+
+
+    @Override
+    public CaptureResult captureAmount(String providerReferenceId, BigDecimal amount) {
+    String transactionId = "MOCK-TXN-" + System.currentTimeMillis();
+    return new CaptureResult(true, transactionId);
+}
 }
