@@ -66,6 +66,29 @@ public ChargingSessionResponse startSession(ChargingSessionStartRequest request)
         return chargingSessionMapper.toResponse(session);
     }
 
+
+
+
+
+
+@Transactional
+public ChargingSessionResponse markAsCharging(UUID id) {
+    ChargingSession session = findSession(id);
+
+    if (session.getStatus() != SessionStatus.STARTED) {
+        throw new BusinessRuleViolationException(
+                "INVALID_SESSION_STATUS",
+                "Sadece STARTED durumundaki oturumlar CHARGING durumuna geçebilir. Şu anki durum: " + session.getStatus()
+        );
+    }
+
+    session.setStatus(SessionStatus.CHARGING);
+    ChargingSession saved = chargingSessionRepository.save(session);
+    return chargingSessionMapper.toResponse(saved);
+}
+
+
+
 @Transactional
 public ChargingSessionResponse completeSession(UUID id, java.math.BigDecimal energyConsumedKwh) {
     ChargingSession session = findSession(id);
@@ -91,25 +114,6 @@ public ChargingSessionResponse completeSession(UUID id, java.math.BigDecimal ene
 }
 
 
-
-
-@Transactional
-public ChargingSessionResponse markAsCharging(UUID id) {
-    ChargingSession session = findSession(id);
-
-    if (session.getStatus() != SessionStatus.STARTED) {
-        throw new BusinessRuleViolationException(
-                "INVALID_SESSION_STATUS",
-                "Sadece STARTED durumundaki oturumlar CHARGING durumuna geçebilir. Şu anki durum: " + session.getStatus()
-        );
-    }
-
-    session.setStatus(SessionStatus.CHARGING);
-    ChargingSession saved = chargingSessionRepository.save(session);
-    return chargingSessionMapper.toResponse(saved);
-}
-
-
 @Transactional
 public ChargingSessionResponse markConnectorRemoved(UUID id) {
     ChargingSession session = findSession(id);
@@ -120,6 +124,8 @@ public ChargingSessionResponse markConnectorRemoved(UUID id) {
                 "Sadece COMPLETED durumundaki oturumlarda konnektör çıkarma işlemi yapılabilir. Şu anki durum: " + session.getStatus()
         );
     }
+
+    
 
     session.setConnectorRemovedAt(LocalDateTime.now());
     session.setStatus(SessionStatus.CLOSED); // hatırlarsın, SessionStatus'te CLOSED zaten vardı
