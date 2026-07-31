@@ -3,6 +3,7 @@ package com.proje.elektrikli_arac_sarj_sistemi.service;
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.ChargingSession;
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.Provision;
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.ProvisionStatus;
+import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.SessionStatus;
 import com.proje.elektrikli_arac_sarj_sistemi.Repository.ChargingSessionRepository;
 import com.proje.elektrikli_arac_sarj_sistemi.Repository.ProvisionRepository;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.provision.ProvisionCreateRequest;
@@ -56,6 +57,16 @@ public class ProvisionService {
 
         Provision saved = provisionRepository.save(provision);
         return provisionMapper.toResponse(saved);
+
+    }
+
+        private void validateSessionEligibleForProvision(ChargingSession session) {
+        if (session.getStatus() != SessionStatus.STARTED) {
+        throw new BusinessRuleViolationException(
+                "INVALID_SESSION_STATUS",
+                "Sadece STARTED durumundaki oturumlar için provizyon oluşturulabilir. Şu anki durum: " + session.getStatus()
+        );
+    }
     }
 
     @Transactional

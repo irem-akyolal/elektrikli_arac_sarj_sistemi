@@ -21,19 +21,19 @@ public class LocationPublicController {
 
     private final LocationPublicService locationPublicService;
 
-    // ✅ Tüm aktif lokasyonlar (filtresiz)
+    //  Tüm aktif lokasyonlar (filtresiz)
     @GetMapping("/active")
     public ResponseEntity<List<LocationResponse>> getActiveLocations() {
         return ResponseEntity.ok(locationPublicService.getActiveLocations());
     }
 
-    // ✅ Lokasyon detayı
+    //  Lokasyon detayı
     @GetMapping("/{id}")
     public ResponseEntity<LocationDetailResponse> getLocationDetail(@PathVariable UUID id) {
         return ResponseEntity.ok(locationPublicService.getLocationDetail(id));
     }
 
-    // ✅ Filtreli arama (isim, şehir, konnektör tipi, müsaitlik)
+    //  Filtreli arama (isim, şehir, konnektör tipi, müsaitlik)
     @GetMapping("/search")
     public ResponseEntity<Page<LocationResponse>> searchLocations(
             @RequestParam(required = false) String name,

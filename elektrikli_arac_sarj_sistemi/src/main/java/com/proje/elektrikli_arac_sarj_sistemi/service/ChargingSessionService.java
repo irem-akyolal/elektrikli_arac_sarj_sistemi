@@ -137,11 +137,11 @@ public ChargingSessionResponse markConnectorRemoved(UUID id) {
 
 
     session.setConnectorRemovedAt(LocalDateTime.now());
-    session.setStatus(SessionStatus.CLOSED); // hatırlarsın, SessionStatus'te CLOSED zaten vardı
+    session.setStatus(SessionStatus.CLOSED); 
     ChargingSession saved = chargingSessionRepository.save(session);
 
     Evse evse = session.getConnector().getEvse();
-    evse.setStatus(EvseStatus.AVAILABLE); // artık gerçekten müsait
+    evse.setStatus(EvseStatus.AVAILABLE); 
     evseRepository.save(evse);
 
     // Otomatik akış: bu session'a bağlı provizyonu bul, tahsilatı otomatik tetikle
