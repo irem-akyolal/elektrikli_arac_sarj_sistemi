@@ -2,12 +2,14 @@ package com.proje.elektrikli_arac_sarj_sistemi.mapper;
 
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.Connector;
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.Location;
+import com.proje.elektrikli_arac_sarj_sistemi.dto.location.ConnectorAvailabilitySummary;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.location.ConnectorSummary;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.location.LocationCreateRequest;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.location.LocationDetailResponse;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.location.LocationResponse;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,8 +31,13 @@ public class LocationMapper {
         return location;
     }
 
-    // Liste/arama sonuçları için — connector YOK, N+1 riski yok
+    // availability parametresiz — boş liste ile, admin panelde availability gerekmez
     public LocationResponse toResponse(Location location) {
+        return toResponse(location, Collections.emptyList());
+    }
+
+    // availability doldurulmuş halde — public arama/liste ekranında kullanılacak
+    public LocationResponse toResponse(Location location, List<ConnectorAvailabilitySummary> availability) {
         return new LocationResponse(
                 location.getId(),
                 location.getOcpiLocationId(),
@@ -42,11 +49,11 @@ public class LocationMapper {
                 location.getLatitude(),
                 location.getLongitude(),
                 location.getTimeZone(),
-                location.isActive()
+                location.isActive(),
+                availability
         );
     }
 
-    // Tekil detay ekranı için — connector listesi VAR, sadece burada
     public LocationDetailResponse toDetailResponse(Location location) {
         return new LocationDetailResponse(
                 location.getId(),

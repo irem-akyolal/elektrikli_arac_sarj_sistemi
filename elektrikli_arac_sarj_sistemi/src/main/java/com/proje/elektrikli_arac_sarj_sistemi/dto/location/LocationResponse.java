@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.UUID;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -22,4 +23,5 @@ public class LocationResponse {
     private Double longitude;
     private String timeZone;
     private boolean active;
+    private List<ConnectorAvailabilitySummary> availability; 
 }
