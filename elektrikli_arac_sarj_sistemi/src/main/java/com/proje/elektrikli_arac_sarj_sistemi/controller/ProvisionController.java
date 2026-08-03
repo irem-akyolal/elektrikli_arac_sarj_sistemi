@@ -1,13 +1,22 @@
 package com.proje.elektrikli_arac_sarj_sistemi.controller;
 
+import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.ProvisionStatus;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.provision.ProvisionCreateRequest;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.provision.ProvisionResponse;
-import com.proje.elektrikli_arac_sarj_sistemi.service.ProvisionService;
+import com.proje.elektrikli_arac_sarj_sistemi.service.provision.ProvisionAdminService;
+import com.proje.elektrikli_arac_sarj_sistemi.service.provision.ProvisionService;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import jakarta.validation.Valid;
+
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @RestController
@@ -15,9 +24,11 @@ import java.util.UUID;
 public class ProvisionController {
 
     private final ProvisionService provisionService;
+    private final ProvisionAdminService provisionAdminService;
 
-    public ProvisionController(ProvisionService provisionService) {
+    public ProvisionController(ProvisionService provisionService, ProvisionAdminService provisionAdminService) {
         this.provisionService = provisionService;
+        this.provisionAdminService = provisionAdminService;
     }
 
     @PostMapping
@@ -39,4 +50,13 @@ public class ProvisionController {
     public ResponseEntity<ProvisionResponse> close(@PathVariable UUID id) {
         return ResponseEntity.ok(provisionService.close(id));
     }
+
+    @GetMapping("/search")
+        public ResponseEntity<Page<ProvisionResponse>> search(
+        @RequestParam(required = false) ProvisionStatus status,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime closedAfter,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime closedBefore,
+        Pageable pageable) {
+    return ResponseEntity.ok(provisionAdminService.search(status, closedAfter, closedBefore, pageable));
+}
 }

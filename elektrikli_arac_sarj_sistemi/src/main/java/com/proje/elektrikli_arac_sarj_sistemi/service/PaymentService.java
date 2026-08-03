@@ -14,6 +14,8 @@ import com.proje.elektrikli_arac_sarj_sistemi.exception.ResourceNotFoundExceptio
 import com.proje.elektrikli_arac_sarj_sistemi.mapper.PaymentMapper;
 import com.proje.elektrikli_arac_sarj_sistemi.payment.CaptureResult;
 import com.proje.elektrikli_arac_sarj_sistemi.payment.PaymentProviderClient;
+import com.proje.elektrikli_arac_sarj_sistemi.service.provision.ProvisionService;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

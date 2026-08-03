@@ -1,4 +1,4 @@
-package com.proje.elektrikli_arac_sarj_sistemi.service;
+package com.proje.elektrikli_arac_sarj_sistemi.service.provision;
 
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.ChargingSession;
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.Provision;
