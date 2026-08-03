@@ -1,7 +1,13 @@
 package com.proje.elektrikli_arac_sarj_sistemi.controller;
 
+import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.PaymentStatus;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.payment.PaymentResponse;
-import com.proje.elektrikli_arac_sarj_sistemi.service.PaymentService;
+import com.proje.elektrikli_arac_sarj_sistemi.service.payment.PaymentAdminService;
+import com.proje.elektrikli_arac_sarj_sistemi.service.payment.PaymentService;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -14,9 +20,11 @@ import java.util.UUID;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final PaymentAdminService paymentAdminService;
 
-    public PaymentController(PaymentService paymentService) {
+    public PaymentController(PaymentService paymentService, PaymentAdminService paymentAdminService) {
         this.paymentService = paymentService;
+        this.paymentAdminService = paymentAdminService;
     }
 
     // Sadece admin panel için — otomatik süreç başarısız olduysa manuel tetikleme
@@ -30,4 +38,12 @@ public class PaymentController {
     public ResponseEntity<PaymentResponse> getById(@PathVariable UUID id) {
         return ResponseEntity.ok(paymentService.getById(id));
     }
+
+    @GetMapping("/search")
+      public ResponseEntity<Page<PaymentResponse>> search(
+        @RequestParam(required = false) PaymentStatus status,
+        @RequestParam(required = false) String transactionId,
+        Pageable pageable) {
+    return ResponseEntity.ok(paymentAdminService.search(status, transactionId, pageable));
+}
 }

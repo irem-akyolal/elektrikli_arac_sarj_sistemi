@@ -15,7 +15,7 @@ import com.proje.elektrikli_arac_sarj_sistemi.dto.session.ChargingSessionStartRe
 import com.proje.elektrikli_arac_sarj_sistemi.exception.BusinessRuleViolationException;
 import com.proje.elektrikli_arac_sarj_sistemi.exception.ResourceNotFoundException;
 import com.proje.elektrikli_arac_sarj_sistemi.mapper.ChargingSessionMapper;
-import com.proje.elektrikli_arac_sarj_sistemi.service.PaymentService;
+import com.proje.elektrikli_arac_sarj_sistemi.service.payment.PaymentService;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
