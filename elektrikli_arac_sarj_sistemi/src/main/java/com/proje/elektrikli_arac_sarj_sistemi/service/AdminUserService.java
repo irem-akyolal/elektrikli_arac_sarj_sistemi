@@ -60,7 +60,7 @@ public class AdminUserService {
     public void deactivate(UUID id) {
         AdminUser adminUser = findAdminUser(id);
         adminUser.setActive(false);
-        adminUserRepository.save(adminUser); // <-- eklenen satır, açık/explicit kayıt
+        adminUserRepository.save(adminUser); 
     }
 
     // ============================

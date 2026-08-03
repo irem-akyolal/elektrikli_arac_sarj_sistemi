@@ -21,7 +21,7 @@ public class Evse extends BaseEntity {
     @Column(nullable = false, unique = true)
     private String ocpiEvseUid; // OCPI'deki uid alanı
 
-    private String evseId; // OCPI'nin insan-okunur evse_id alanı (örn: TR*ABC*E12345)
+    private String evseId; // OCPI'nin insan-okunur evse_id alanı 
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "location_id", nullable = false)

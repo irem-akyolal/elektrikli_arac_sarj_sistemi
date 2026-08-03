@@ -12,12 +12,12 @@ public class ErrorResponse {
     private final String path;
     private final Map<String, String> fieldErrors; // sadece validation hatalarında dolu, diğerlerinde null
 
-    // Genel hatalar için (fieldErrors olmadan)
+    // Genel hatalar için 
     public ErrorResponse(int status, String errorCode, String message, String path) {
         this(status, errorCode, message, path, null);
     }
 
-    // Validation hataları için (fieldErrors ile)
+    // Validation hataları için 
     public ErrorResponse(int status, String errorCode, String message, String path, Map<String, String> fieldErrors) {
         this.timestamp = LocalDateTime.now();
         this.status = status;

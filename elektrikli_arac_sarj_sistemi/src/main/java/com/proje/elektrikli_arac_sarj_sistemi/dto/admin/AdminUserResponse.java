@@ -21,7 +21,7 @@ public class AdminUserResponse {
         this.lastLoginAt = lastLoginAt;
     }
 
-    // sadece getter'lar — response nesnesi, dışarıdan değiştirilmemeli
+   
     public UUID getId() { return id; }
     public String getUsername() { return username; }
     public AdminRole getRole() { return role; }

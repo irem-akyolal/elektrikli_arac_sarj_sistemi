@@ -12,11 +12,11 @@ public class AdminUserCreateRequest {
 
     @NotBlank(message = "Şifre boş olamaz")
     @Size(min = 8, message = "Şifre en az 8 karakter olmalı")
-    private String password; // dikkat: hash değil, ham şifre — hashleme service'te yapılacak
+    private String password; //hash değil, ham şifre — hashleme service'te yapılacak
 
     private AdminRole role;
 
-    // getter/setter
+  
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
     public String getPassword() { return password; }

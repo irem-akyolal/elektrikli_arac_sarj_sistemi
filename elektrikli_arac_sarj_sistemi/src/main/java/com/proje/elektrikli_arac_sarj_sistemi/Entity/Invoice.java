@@ -38,7 +38,7 @@ public class Invoice extends BaseEntity {
     private BigDecimal subTotal;      // KDV hariç tutar
 
     @Column(nullable = false)
-    private BigDecimal taxRate;       // örn: 0.20
+    private BigDecimal taxRate;       //  0.20
 
     @Column(nullable = false)
     private BigDecimal taxAmount;     // hesaplanan KDV tutarı

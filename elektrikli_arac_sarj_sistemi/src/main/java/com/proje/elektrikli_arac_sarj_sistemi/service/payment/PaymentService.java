@@ -47,7 +47,7 @@ public class PaymentService {
         this.invoiceService = invoiceService;
     }
 
-    // Asıl iş mantığı burada — hem otomatik akış hem admin manuel endpoint bunu çağırır
+    // Asıl iş mantığı burada oluyor— hem otomatik akış hem admin manuel endpoint bunu çağırır
     @Transactional
     public PaymentResponse captureForProvision(UUID provisionId) {
         Provision provision = provisionRepository.findById(provisionId)
@@ -90,7 +90,7 @@ public class PaymentService {
 
         Payment saved = paymentRepository.save(payment);
 
-        // Tahsilat başarılı olduğuna göre, provizyonu da kapat
+        // Tahsilat başarılı olduğunda provizyon da kapatılacak
         provisionService.close(provision.getId());
 
         invoiceService.generateForPayment(saved);

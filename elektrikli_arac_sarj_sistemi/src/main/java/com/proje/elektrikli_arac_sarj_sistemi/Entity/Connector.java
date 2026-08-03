@@ -42,7 +42,7 @@ public class Connector extends BaseEntity {
     private Integer maxAmperage;
     private Integer maxElectricPowerWatt;
 
-    // Bizim kendi iş mantığımıza ait, OCPI spesifikasyonunda yok
+    // kendi iş mantığımıza ait, OCPI spesifikasyonunda yok
     @Column(nullable = false)
     private BigDecimal unitPrice;
 }

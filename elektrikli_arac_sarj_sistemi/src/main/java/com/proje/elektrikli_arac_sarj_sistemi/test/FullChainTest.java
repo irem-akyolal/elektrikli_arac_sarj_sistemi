@@ -66,7 +66,7 @@ public class FullChainTest {
             System.out.println("Connector hazır: " + connector.getId());
 
             // 4) ChargingSession — HER ÇALIŞTIRMADA yeni bir session oluşturuyoruz
-            // (session'lar tekil olmak zorunda değil, gerçek hayatta zaten çok sayıda olur)
+            // (session'lar tekil olmak zorunda değildir)
             ChargingSession session = new ChargingSession();
             session.setConnector(connector);
             session.setPlateNumber("34TEST34");

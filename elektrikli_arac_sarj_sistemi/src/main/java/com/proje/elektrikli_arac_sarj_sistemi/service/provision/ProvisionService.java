@@ -80,7 +80,7 @@ public class ProvisionService {
             );
         }
 
-        // Ödeme kuruluşuna (hangisi olduğunu bilmiyoruz) onay isteği gönderiyoruz
+        // Ödeme kuruluşuna onay isteği gönderiyoruz
         ProvisionAuthorizationResult result = paymentProviderClient.authorizeProvision(provision.getRequestedAmount());
 
         if (!result.isApproved()) {

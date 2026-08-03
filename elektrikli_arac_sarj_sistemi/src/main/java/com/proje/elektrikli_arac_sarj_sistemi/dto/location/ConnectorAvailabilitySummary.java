@@ -13,5 +13,5 @@ public class ConnectorAvailabilitySummary {
     private String powerType;      // "AC_1_PHASE", "AC_3_PHASE", "DC" gibi
     private long totalCount;
     private long availableCount;
-    private BigDecimal unitPrice;  // aynı tip için genelde sabit fiyat, ortalama alıyoruz
+    private BigDecimal unitPrice;  // aynı tip için genelde sabit fiyat, ortalama alınacak
 }

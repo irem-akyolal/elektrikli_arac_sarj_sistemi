@@ -31,7 +31,7 @@ public class LocationMapper {
         return location;
     }
 
-    // availability parametresiz — boş liste ile, admin panelde availability gerekmez
+    // availability parametresiz — boş liste ile, admin panelde availability gerekmeyecek
     public LocationResponse toResponse(Location location) {
         return toResponse(location, Collections.emptyList());
     }
