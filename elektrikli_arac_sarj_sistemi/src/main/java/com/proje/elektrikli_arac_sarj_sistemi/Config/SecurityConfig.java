@@ -1,25 +1,48 @@
 package com.proje.elektrikli_arac_sarj_sistemi.Config;
 
+import com.proje.elektrikli_arac_sarj_sistemi.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 public class SecurityConfig {
 
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    }
+
     @Bean
-    public org.springframework.security.crypto.password.PasswordEncoder passwordEncoder() {
-        return new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable()) // API için CSRF koruması şimdilik kapalı (JWT/token bazlı auth kurulunca gözden geçirilecek)
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .anyRequest().permitAll() // ŞİMDİLİK herkese açık — gerçek auth sistemi kurulunca değişecek
-            );
+                // Public — kimlik doğrulama gerektirmeyen endpoint'ler
+                .requestMatchers("/api/auth/login").permitAll()
+                .requestMatchers("/api/locations/active", "/api/locations/active/**").permitAll()
+                .requestMatchers("/api/charging-sessions/**").permitAll() // kullanıcı akışı, üyelik yok
+                .requestMatchers("/api/provisions/**").permitAll()
+                .requestMatchers("/api/payments/**").permitAll()
+                .requestMatchers("/api/invoices/**").permitAll()
+                // Admin — token gerektiren endpoint'ler
+                .requestMatchers("/api/admin-users/**").hasRole("SUPER_ADMIN")
+                .anyRequest().authenticated()
+            )
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 }

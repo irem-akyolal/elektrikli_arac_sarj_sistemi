@@ -27,18 +27,21 @@ public class PaymentService {
     private final ProvisionRepository provisionRepository;
     private final PaymentMapper paymentMapper;
     private final PaymentProviderClient paymentProviderClient;
-    private final ProvisionService provisionService; // provizyonu kapatmak için
+    private final ProvisionService provisionService;
+    private final InvoiceService invoiceService; 
 
     public PaymentService(PaymentRepository paymentRepository,
                            ProvisionRepository provisionRepository,
                            PaymentMapper paymentMapper,
                            PaymentProviderClient paymentProviderClient,
-                           ProvisionService provisionService) {
+                           ProvisionService provisionService,
+                           InvoiceService invoiceService) {
         this.paymentRepository = paymentRepository;
         this.provisionRepository = provisionRepository;
         this.paymentMapper = paymentMapper;
         this.paymentProviderClient = paymentProviderClient;
         this.provisionService = provisionService;
+        this.invoiceService = invoiceService;
     }
 
     // Asıl iş mantığı burada — hem otomatik akış hem admin manuel endpoint bunu çağırır
@@ -86,6 +89,8 @@ public class PaymentService {
 
         // Tahsilat başarılı olduğuna göre, provizyonu da kapat
         provisionService.close(provision.getId());
+
+        invoiceService.generateForPayment(saved);
 
         return paymentMapper.toResponse(saved);
     }
