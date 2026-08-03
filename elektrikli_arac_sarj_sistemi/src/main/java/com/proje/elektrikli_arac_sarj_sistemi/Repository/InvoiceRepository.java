@@ -11,4 +11,6 @@ public interface InvoiceRepository extends JpaRepository<Invoice, UUID> {
     Optional<Invoice> findByChargingSessionId(UUID chargingSessionId);
 
     Optional<Invoice> findByInvoiceNumber(String invoiceNumber);
-}
+
+     boolean existsByInvoiceNumber(String invoiceNumber);
+}     
