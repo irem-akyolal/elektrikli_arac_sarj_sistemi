@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,8 @@ public class LocationAdminService {
     private final LocationMapper locationMapper;
     private final LocationCoreService locationCoreService;
 
+
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR')")
     @Transactional
     public LocationResponse create(LocationCreateRequest request) {
         locationCoreService.validateOcpiLocationId(request.getOcpiLocationId());
@@ -33,6 +36,8 @@ public class LocationAdminService {
         return locationMapper.toResponse(saved);
     }
 
+
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR')")
     @Transactional
     public LocationResponse update(UUID id, LocationUpdateRequest request) {
         Location location = locationCoreService.findLocation(id);
@@ -50,13 +55,15 @@ public class LocationAdminService {
         return locationMapper.toResponse(updated);
     }
 
+    @PreAuthorize("hasRole('SUPER_ADMIN')") 
     @Transactional
     public LocationResponse activate(UUID id) {
         Location location = locationCoreService.findLocation(id);
         location.setActive(true);
         return locationMapper.toResponse(locationRepository.save(location));
     }
-
+    
+    @PreAuthorize("hasRole('SUPER_ADMIN')") 
     @Transactional
     public void deactivate(UUID id) {
         Location location = locationCoreService.findLocation(id);
@@ -64,12 +71,14 @@ public class LocationAdminService {
         locationRepository.save(location);
     }
 
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR', 'VIEWER')")
     @Transactional(readOnly = true)
     public LocationResponse getById(UUID id) {
         Location location = locationCoreService.findLocation(id);
         return locationMapper.toResponse(location);
     }
 
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR', 'VIEWER')")
     @Transactional(readOnly = true)
     public List<LocationResponse> getAll() {
         return locationRepository.findAll()
@@ -77,7 +86,8 @@ public class LocationAdminService {
                 .map(locationMapper::toResponse)
                 .toList();
     }
-
+    
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR', 'VIEWER')")
     @Transactional(readOnly = true)
     public Page<LocationResponse> getAllWithFilters(String name, String city, Boolean active, Pageable pageable) {
         Specification<Location> spec = Specification

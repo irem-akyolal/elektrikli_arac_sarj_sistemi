@@ -4,6 +4,7 @@ import com.proje.elektrikli_arac_sarj_sistemi.dto.payment.PaymentResponse;
 import com.proje.elektrikli_arac_sarj_sistemi.service.PaymentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -19,6 +20,7 @@ public class PaymentController {
     }
 
     // Sadece admin panel için — otomatik süreç başarısız olduysa manuel tetikleme
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR')")
     @PostMapping("/capture")
     public ResponseEntity<PaymentResponse> captureManually(@RequestParam UUID provisionId) {
         return ResponseEntity.status(HttpStatus.CREATED).body(paymentService.captureForProvision(provisionId));

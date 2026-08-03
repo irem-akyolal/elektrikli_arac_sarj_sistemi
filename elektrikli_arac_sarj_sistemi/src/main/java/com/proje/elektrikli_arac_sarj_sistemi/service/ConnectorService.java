@@ -9,6 +9,8 @@ import com.proje.elektrikli_arac_sarj_sistemi.dto.connector.ConnectorResponse;
 import com.proje.elektrikli_arac_sarj_sistemi.exception.BusinessRuleViolationException;
 import com.proje.elektrikli_arac_sarj_sistemi.exception.ResourceNotFoundException;
 import com.proje.elektrikli_arac_sarj_sistemi.mapper.ConnectorMapper;
+
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,7 +31,8 @@ public class ConnectorService {
         this.evseRepository = evseRepository;
         this.connectorMapper = connectorMapper;
     }
-
+    
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR')")
     @Transactional
     public ConnectorResponse create(ConnectorCreateRequest request) {
         validateOcpiConnectorId(request.getOcpiConnectorId());
@@ -64,7 +67,8 @@ public class ConnectorService {
                 .map(connectorMapper::toResponse)
                 .toList();
     }
-
+     
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR')")
     @Transactional
     public ConnectorResponse updateUnitPrice(UUID id, java.math.BigDecimal newPrice) {
         Connector connector = findConnector(id);

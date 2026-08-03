@@ -10,6 +10,8 @@ import com.proje.elektrikli_arac_sarj_sistemi.dto.evse.EvseResponse;
 import com.proje.elektrikli_arac_sarj_sistemi.exception.BusinessRuleViolationException;
 import com.proje.elektrikli_arac_sarj_sistemi.exception.ResourceNotFoundException;
 import com.proje.elektrikli_arac_sarj_sistemi.mapper.EvseMapper;
+
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +33,7 @@ public class EvseService {
         this.evseMapper = evseMapper;
     }
 
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR')")
     @Transactional
     public EvseResponse create(EvseCreateRequest request) {
         validateOcpiEvseUid(request.getOcpiEvseUid());
@@ -60,7 +63,8 @@ public class EvseService {
                 .map(evseMapper::toResponse)
                 .toList();
     }
-
+    
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR')")
     @Transactional
     public EvseResponse updateStatus(UUID id, EvseStatus newStatus) {
         Evse evse = findEvse(id);

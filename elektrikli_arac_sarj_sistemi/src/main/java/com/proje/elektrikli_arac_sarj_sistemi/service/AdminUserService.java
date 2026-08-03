@@ -7,6 +7,8 @@ import com.proje.elektrikli_arac_sarj_sistemi.dto.admin.AdminUserResponse;
 import com.proje.elektrikli_arac_sarj_sistemi.exception.BusinessRuleViolationException;
 import com.proje.elektrikli_arac_sarj_sistemi.exception.ResourceNotFoundException;
 import com.proje.elektrikli_arac_sarj_sistemi.mapper.AdminUserMapper;
+
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +31,8 @@ public class AdminUserService {
         this.adminUserMapper = adminUserMapper;
     }
 
+    
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     @Transactional
     public AdminUserResponse create(AdminUserCreateRequest request) {
         validateUsername(request.getUsername());
