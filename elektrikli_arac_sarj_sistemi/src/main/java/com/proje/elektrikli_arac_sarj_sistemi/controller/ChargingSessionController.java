@@ -2,7 +2,18 @@ package com.proje.elektrikli_arac_sarj_sistemi.controller;
 
 import com.proje.elektrikli_arac_sarj_sistemi.dto.session.ChargingSessionResponse;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.session.ChargingSessionStartRequest;
-import com.proje.elektrikli_arac_sarj_sistemi.service.ChargingSessionService;
+import com.proje.elektrikli_arac_sarj_sistemi.service.session.ChargingSessionService;
+
+
+import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.SessionStatus;
+import com.proje.elektrikli_arac_sarj_sistemi.service.session.ChargingSessionAdminService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.time.LocalDateTime;
+
+
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,9 +27,12 @@ import java.util.UUID;
 public class ChargingSessionController {
 
     private final ChargingSessionService chargingSessionService;
+    private final ChargingSessionAdminService chargingSessionAdminService;
 
-    public ChargingSessionController(ChargingSessionService chargingSessionService) {
+
+    public ChargingSessionController(ChargingSessionService chargingSessionService,ChargingSessionAdminService chargingSessionAdminService) {
         this.chargingSessionService = chargingSessionService;
+        this.chargingSessionAdminService = chargingSessionAdminService;
     }
 
     @PostMapping("/start")
@@ -47,4 +61,17 @@ public ResponseEntity<ChargingSessionResponse> markConnectorRemoved(@PathVariabl
             @PathVariable UUID id, @RequestParam BigDecimal energyConsumedKwh) {
         return ResponseEntity.ok(chargingSessionService.completeSession(id, energyConsumedKwh));
     }
+
+
+    @GetMapping("/search")
+public ResponseEntity<Page<ChargingSessionResponse>> search(
+        @RequestParam(required = false) SessionStatus status,
+        @RequestParam(required = false) String email,
+        @RequestParam(required = false) String plateNumber,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startedAfter,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startedBefore,
+        Pageable pageable) {
+    return ResponseEntity.ok(chargingSessionAdminService.search(
+            status, email, plateNumber, startedAfter, startedBefore, pageable));
+}
 }

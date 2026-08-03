@@ -47,7 +47,7 @@ public class LocationSpecification {
         };
     }
 
-    // DÜZELTİLDİ: enum'a çevirip enum ile karşılaştırıyoruz, string lower() değil
+  
     public static Specification<Location> hasConnectorType(String connectorType) {
         return (root, query, criteriaBuilder) -> {
             if (!StringUtils.hasText(connectorType)) {

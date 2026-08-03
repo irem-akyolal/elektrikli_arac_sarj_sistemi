@@ -33,7 +33,12 @@ public class SecurityConfig {
                 // Public — kimlik doğrulama gerektirmeyen endpoint'ler
                 .requestMatchers("/api/auth/login").permitAll()
                 .requestMatchers("/api/locations/active", "/api/locations/active/**").permitAll()
-                .requestMatchers("/api/charging-sessions/**").permitAll() // kullanıcı akışı, üyelik yok
+                // SecurityConfig'te güncelle:
+                 .requestMatchers("/api/charging-sessions/start",
+                 "/api/charging-sessions/*/charging",
+                 "/api/charging-sessions/*/complete",
+                 "/api/charging-sessions/*/connector-removed").permitAll()
+                 .requestMatchers("/api/charging-sessions/*").permitAll() 
                 .requestMatchers("/api/provisions/**").permitAll()
                 .requestMatchers("/api/payments/**").permitAll()
                 .requestMatchers("/api/invoices/**").permitAll()
