@@ -113,20 +113,28 @@ public class OcpiLocationSyncService {
     // ============================
 
     private EvseStatus mapEvseStatus(String ocpiStatus) {
-        try {
-            return EvseStatus.valueOf(ocpiStatus);
-        } catch (IllegalArgumentException ex) {
-            return EvseStatus.UNKNOWN;
-        }
-    }
+    if (ocpiStatus == null) return EvseStatus.UNKNOWN;
 
+    return switch (ocpiStatus) {
+        case "AVAILABLE" -> EvseStatus.AVAILABLE;
+        case "BLOCKED" -> EvseStatus.BLOCKED;
+        case "CHARGING" -> EvseStatus.CHARGING;
+        case "INOPERATIVE" -> EvseStatus.INOPERATIVE;
+        case "OUTOFORDER" -> EvseStatus.OUT_OF_ORDER; // cpo tarafından gelen isim bizim tututuğumuz ile farklı olabilir diye elle eşleştirme yapıyoruz.
+        case "PLANNED" -> EvseStatus.PLANNED;
+        case "REMOVED" -> EvseStatus.REMOVED;
+        case "RESERVED" -> EvseStatus.RESERVED;
+        default -> EvseStatus.UNKNOWN;
+    };
+}
     private ConnectorStandard mapConnectorStandard(String ocpiStandard) {
-        try {
-            return ConnectorStandard.valueOf(ocpiStandard);
-        } catch (IllegalArgumentException ex) {
-            return ConnectorStandard.IEC_62196_T2; // fallback, gerçek entegrasyonda genişletilecek
-        }
-    }
+     if (ocpiStandard == null) return ConnectorStandard.UNKNOWN;
+      try {
+        return ConnectorStandard.valueOf(ocpiStandard.toUpperCase());
+         } catch (IllegalArgumentException ex) {
+        return ConnectorStandard.UNKNOWN;
+         }
+     }
 
     private ConnectorFormat mapConnectorFormat(String ocpiFormat) {
         return ConnectorFormat.valueOf(ocpiFormat);
