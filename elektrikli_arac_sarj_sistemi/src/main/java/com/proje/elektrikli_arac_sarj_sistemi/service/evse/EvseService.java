@@ -1,4 +1,4 @@
-package com.proje.elektrikli_arac_sarj_sistemi.service;
+package com.proje.elektrikli_arac_sarj_sistemi.service.evse;
 
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.Evse;
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.Location;
