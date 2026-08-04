@@ -1,8 +1,15 @@
 package com.proje.elektrikli_arac_sarj_sistemi.controller;
 
+import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.ConnectorStandard;
+import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.PowerType;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.connector.ConnectorCreateRequest;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.connector.ConnectorResponse;
-import com.proje.elektrikli_arac_sarj_sistemi.service.ConnectorService;
+import com.proje.elektrikli_arac_sarj_sistemi.service.connector.ConnectorAdminService;
+import com.proje.elektrikli_arac_sarj_sistemi.service.connector.ConnectorService;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,9 +24,11 @@ import java.util.UUID;
 public class ConnectorController {
 
     private final ConnectorService connectorService;
+    private final ConnectorAdminService connectorAdminService;
 
-    public ConnectorController(ConnectorService connectorService) {
+    public ConnectorController(ConnectorService connectorService, ConnectorAdminService connectorAdminService) {
         this.connectorService = connectorService;
+        this.connectorAdminService = connectorAdminService;
     }
 
     @PostMapping
@@ -43,4 +52,15 @@ public class ConnectorController {
             @PathVariable UUID id, @RequestParam BigDecimal price) {
         return ResponseEntity.ok(connectorService.updateUnitPrice(id, price));
     }
+
+    @GetMapping("/search")
+    public ResponseEntity<Page<ConnectorResponse>> search(
+        @RequestParam(required = false) ConnectorStandard standard,
+        @RequestParam(required = false) PowerType powerType,
+        @RequestParam(required = false) UUID evseId,
+        Pageable pageable) {
+         return ResponseEntity.ok(connectorAdminService.search(standard, powerType, evseId, pageable));
+
+}
+
 }

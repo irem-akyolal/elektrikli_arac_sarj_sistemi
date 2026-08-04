@@ -1,4 +1,4 @@
-package com.proje.elektrikli_arac_sarj_sistemi.service;
+package com.proje.elektrikli_arac_sarj_sistemi.service.connector;
 
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.Connector;
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.Evse;

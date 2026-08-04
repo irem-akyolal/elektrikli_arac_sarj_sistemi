@@ -4,6 +4,7 @@ import com.proje.elektrikli_arac_sarj_sistemi.Entity.Connector;
 import com.proje.elektrikli_arac_sarj_sistemi.Repository.projection.ConnectorAvailabilityProjection;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -11,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface ConnectorRepository extends JpaRepository<Connector, UUID> {
+public interface ConnectorRepository extends JpaRepository<Connector, UUID>, JpaSpecificationExecutor<Connector> {
 
     Optional<Connector> findByOcpiConnectorId(String ocpiConnectorId);
 
@@ -31,4 +32,8 @@ public interface ConnectorRepository extends JpaRepository<Connector, UUID> {
         GROUP BY c.evse.location.id, c.powerType
         """)
     List<ConnectorAvailabilityProjection> findAvailabilitySummaries(@Param("locationIds") List<UUID> locationIds);
+
+
+    @Query("SELECT COUNT(c) FROM Connector c WHERE c.evse.status = com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.EvseStatus.AVAILABLE")
+    long countAvailable(); // admin dashbord için
 }

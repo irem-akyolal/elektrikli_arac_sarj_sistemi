@@ -15,5 +15,9 @@ public interface LocationRepository extends JpaRepository<Location, UUID>, JpaSp
     boolean existsByOcpiLocationId(String ocpiLocationId);
 
     List<Location> findAllByActiveTrue();
+
+    long countByActiveTrue(); // admin dashborad için eklendi aktif olan location sayısını göstermek için
+
+    //JPArepository zaten toplam lokasyon sayısnı veriyor count() metodu ile
 }
 
