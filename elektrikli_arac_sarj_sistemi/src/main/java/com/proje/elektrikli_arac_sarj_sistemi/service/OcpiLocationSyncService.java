@@ -17,7 +17,12 @@ import com.proje.elektrikli_arac_sarj_sistemi.ocpi.dto.OcpiLocationDto;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import java.math.BigDecimal;
+
 
 @Service
 public class OcpiLocationSyncService {
@@ -37,22 +42,31 @@ public class OcpiLocationSyncService {
         this.connectorRepository = connectorRepository;
     }
 
-    @Transactional
-    public void syncLocations() {
-        var ocpiLocations = ocpiClient.fetchLocations();
+   @Transactional
+   public void syncLocations() {
 
-        for (OcpiLocationDto ocpiLocation : ocpiLocations) {
-            Location location = upsertLocation(ocpiLocation);
+    var ocpiLocations = ocpiClient.fetchLocations();
 
-            for (OcpiEvseDto ocpiEvse : ocpiLocation.getEvses()) {
-                Evse evse = upsertEvse(ocpiEvse, location);
+    Set<String> activeOcpiLocationIds = ocpiLocations.stream()
+            .map(OcpiLocationDto::getId)
+            .collect(Collectors.toSet());
 
-                for (OcpiConnectorDto ocpiConnector : ocpiEvse.getConnectors()) {
-                    upsertConnector(ocpiConnector, evse);
-                }
+    for (OcpiLocationDto ocpiLocation : ocpiLocations) {
+
+        Location location = upsertLocation(ocpiLocation);
+
+        for (OcpiEvseDto ocpiEvse : ocpiLocation.getEvses()) {
+
+            Evse evse = upsertEvse(ocpiEvse, location);
+
+            for (OcpiConnectorDto ocpiConnector : ocpiEvse.getConnectors()) {
+                upsertConnector(ocpiConnector, evse);
             }
         }
     }
+
+    deactivateMissingLocations(activeOcpiLocationIds);
+  }
 
     // ============================
     // Private Methods — Upsert Mantığı
@@ -143,4 +157,31 @@ public class OcpiLocationSyncService {
     private PowerType mapPowerType(String ocpiPowerType) {
         return PowerType.valueOf(ocpiPowerType);
     }
+
+
+
+    private void deactivateMissingLocations(Set<String> activeOcpiLocationIds) {
+
+    var locations = locationRepository.findAll();
+
+    for (Location location : locations) {
+
+        if (!activeOcpiLocationIds.contains(location.getOcpiLocationId())) {
+
+            location.setActive(false);
+            location.setDeletedAt(LocalDateTime.now());
+
+            for (Evse evse : location.getEvses()) {
+
+                evse.setDeletedAt(LocalDateTime.now());
+
+                for (Connector connector : evse.getConnectors()) {
+                    connector.setDeletedAt(LocalDateTime.now());
+                }
+            }
+
+            locationRepository.save(location);
+        }
+    }
+}
 }
