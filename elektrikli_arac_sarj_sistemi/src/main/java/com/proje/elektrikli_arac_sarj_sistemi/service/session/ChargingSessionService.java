@@ -15,6 +15,8 @@ import com.proje.elektrikli_arac_sarj_sistemi.dto.session.ChargingSessionStartRe
 import com.proje.elektrikli_arac_sarj_sistemi.exception.BusinessRuleViolationException;
 import com.proje.elektrikli_arac_sarj_sistemi.exception.ResourceNotFoundException;
 import com.proje.elektrikli_arac_sarj_sistemi.mapper.ChargingSessionMapper;
+import com.proje.elektrikli_arac_sarj_sistemi.ocpi.OcpiClient;
+import com.proje.elektrikli_arac_sarj_sistemi.ocpi.StartSessionResult;
 import com.proje.elektrikli_arac_sarj_sistemi.service.payment.PaymentService;
 
 import org.springframework.stereotype.Service;
@@ -26,25 +28,28 @@ import java.util.UUID;
 @Service
 public class ChargingSessionService {
 
-    private final ChargingSessionRepository chargingSessionRepository;
-    private final ConnectorRepository connectorRepository;
-    private final EvseRepository evseRepository;
+     private final ChargingSessionRepository chargingSessionRepository;
+     private final ConnectorRepository connectorRepository;
+     private final EvseRepository evseRepository;
      private final ProvisionRepository provisionRepository;
-    private final ChargingSessionMapper chargingSessionMapper;
+     private final ChargingSessionMapper chargingSessionMapper;
      private final PaymentService paymentService; // otomatik tahsilat için
+     private final OcpiClient ocpiClient; // dışarı akışı (sistem → CPO, Remote Start/Stop) Şarj Başlat" dediğimizde, gerçekten OCPI'ye (mock'a) bir istek gidecek
 
     public ChargingSessionService(ChargingSessionRepository chargingSessionRepository,
                                    ConnectorRepository connectorRepository,
                                    EvseRepository evseRepository,
                                    ProvisionRepository provisionRepository,
                                    ChargingSessionMapper chargingSessionMapper,
-                                   PaymentService paymentService) {
+                                   PaymentService paymentService,
+                                   OcpiClient ocpiClient) {
         this.chargingSessionRepository = chargingSessionRepository;
         this.connectorRepository = connectorRepository;
         this.evseRepository= evseRepository;
         this.provisionRepository = provisionRepository;
         this.chargingSessionMapper = chargingSessionMapper;
         this.paymentService = paymentService;
+        this.ocpiClient = ocpiClient;
 
     }
 
@@ -55,6 +60,20 @@ public ChargingSessionResponse startSession(ChargingSessionStartRequest request)
                     "Konnektör bulunamadı: " + request.getConnectorId()));
 
     validateConnectorAvailable(connector);
+
+
+       // OCPI'ye Remote Start isteği gönder
+    StartSessionResult ocpiResult = ocpiClient.startSession(
+            connector.getEvse().getOcpiEvseUid(),
+            extractConnectorId(connector.getOcpiConnectorId())
+    );
+
+    if (!ocpiResult.isAccepted()) {
+        throw new BusinessRuleViolationException(
+                "OCPI_START_REJECTED",
+                "CPO şarj başlatma isteğini reddetti."
+        );
+    }
 
     ChargingSession session = new ChargingSession();
     session.setConnector(connector);
@@ -137,7 +156,8 @@ public ChargingSessionResponse markConnectorRemoved(UUID id) {
     }
 
 
-
+    ocpiClient.stopSession(session.getOcpiSessionId()); // CPO'ya bilgi ver
+    
     session.setConnectorRemovedAt(LocalDateTime.now());
     session.setStatus(SessionStatus.CLOSED); 
     ChargingSession saved = chargingSessionRepository.save(session);
@@ -173,4 +193,12 @@ public ChargingSessionResponse markConnectorRemoved(UUID id) {
         return chargingSessionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Şarj oturumu bulunamadı: " + id));
     }
+
+
+    
+    private String extractConnectorId(String ocpiConnectorId) {
+    // "evseUid-connectorId" formatında birleştirmiştik, geri ayırıyoruz
+    int lastDashIndex = ocpiConnectorId.lastIndexOf('-');
+    return ocpiConnectorId.substring(lastDashIndex + 1);
+}
 }

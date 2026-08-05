@@ -11,44 +11,54 @@ import java.util.List;
 @Component
 public class MockOcpiClient implements OcpiClient {
 
-    @Override
-    public List<OcpiLocationDto> fetchLocations() {
-        // Gerçek CPO entegrasyonu gelene kadar, sabit/sahte bir veri seti döndürüyoruz.
-        OcpiLocationDto location = new OcpiLocationDto();
-        location.setId("MOCKLOC1");
-        location.setCountryCode("TR");
-        location.setPartyId("NAF");
-        location.setName("Mock CPO İstasyonu");
-        location.setAddress("Test Caddesi No:1");
-        location.setCity("İstanbul");
-        location.setPostalCode("34000");
-        location.setCountry("TUR");
+// MockOcpiClient.java - Yeni lokasyon ekle
+@Override
+public List<OcpiLocationDto> fetchLocations() {
+    // Mevcut mock veriler
+    OcpiLocationDto location1 = createMockLocation("MOCKLOC1", "Mock CPO İstasyonu");
 
-        OcpiCoordinatesDto coordinates = new OcpiCoordinatesDto();
-        coordinates.setLatitude("41.0082");
-        coordinates.setLongitude("28.9784");
-        location.setCoordinates(coordinates);
+    // ✅ YENİ: İkinci bir mock lokasyon ekle
+    OcpiLocationDto location2 = createMockLocation("MOCKLOC2", "Mock İkinci İstasyon");
 
-        OcpiConnectorDto connector = new OcpiConnectorDto();
-        connector.setId("1");
-        connector.setStandard("IEC_62196_T2");
-        connector.setFormat("SOCKET");
-        connector.setPowerType("AC_3_PHASE");
-        connector.setMaxVoltage(220);
-        connector.setMaxAmperage(32);
+    return List.of(location1, location2);
+}
 
-        OcpiEvseDto evse = new OcpiEvseDto();
-        evse.setUid("MOCK-EVSE-UID-1");
-        evse.setEvseId("TR*NAF*E00001");
-        evse.setStatus("AVAILABLE");
-        evse.setConnectors(List.of(connector));
-        evse.setLastUpdated(Instant.now().toString());
+private OcpiLocationDto createMockLocation(String id, String name) {
+    OcpiLocationDto location = new OcpiLocationDto();
+    location.setId(id);
+    location.setCountryCode("TR");
+    location.setPartyId("NAF");
+    location.setName(name);
+    location.setAddress("Test Caddesi No:1");
+    location.setCity("İstanbul");
+    location.setPostalCode("34000");
+    location.setCountry("TUR");
 
-        location.setEvses(List.of(evse));
-        location.setLastUpdated(Instant.now().toString());
+    OcpiCoordinatesDto coordinates = new OcpiCoordinatesDto();
+    coordinates.setLatitude("41.0082");
+    coordinates.setLongitude("28.9784");
+    location.setCoordinates(coordinates);
 
-        return List.of(location);
-    }
+    OcpiConnectorDto connector = new OcpiConnectorDto();
+    connector.setId("1");
+    connector.setStandard("IEC_62196_T2");
+    connector.setFormat("SOCKET");
+    connector.setPowerType("AC_3_PHASE");
+    connector.setMaxVoltage(220);
+    connector.setMaxAmperage(32);
+
+    OcpiEvseDto evse = new OcpiEvseDto();
+    evse.setUid("MOCK-EVSE-UID-" + id);
+    evse.setEvseId("TR*NAF*E" + id);
+    evse.setStatus("AVAILABLE");
+    evse.setConnectors(List.of(connector));
+    evse.setLastUpdated(Instant.now().toString());
+
+    location.setEvses(List.of(evse));
+    location.setLastUpdated(Instant.now().toString());
+
+    return location;
+}
 
     @Override
     public StartSessionResult startSession(String evseUid, String connectorId) {
