@@ -33,7 +33,6 @@ public class SecurityConfig {
                 // Public — kimlik doğrulama gerektirmeyen endpoint'ler
                 .requestMatchers("/api/auth/login").permitAll()
                 .requestMatchers("/api/locations/active", "/api/locations/active/**").permitAll()
-                // SecurityConfig'te güncelle:
                  .requestMatchers("/api/charging-sessions/start",
                  "/api/charging-sessions/*/charging",
                  "/api/charging-sessions/*/complete",
@@ -44,6 +43,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/invoices/**").permitAll()
                 // Admin — token gerektiren endpoint'ler
                 .requestMatchers("/api/admin-users/**").hasRole("SUPER_ADMIN")
+                .requestMatchers("/api/admin/**").hasAnyRole("SUPER_ADMIN", "OPERATOR", "VIEWER")
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,7 +29,8 @@ public class EvseController {
         this.evseService = evseService;
         this.evseAdminService = evseAdminService;
     }
-
+    
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR')")
     @PostMapping
     public ResponseEntity<EvseResponse> create(@Valid @RequestBody EvseCreateRequest request) {
         EvseResponse response = evseService.create(request);
@@ -45,11 +47,13 @@ public class EvseController {
         return ResponseEntity.ok(evseService.getByLocationId(locationId));
     }
 
+     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR')")
     @PatchMapping("/{id}/status")
     public ResponseEntity<EvseResponse> updateStatus(@PathVariable UUID id, @RequestParam EvseStatus status) {
         return ResponseEntity.ok(evseService.updateStatus(id, status));
     }
-
+    
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR', 'VIEWER')")
     @GetMapping("/search")
     public ResponseEntity<Page<EvseResponse>> search(
         @RequestParam(required = false) EvseStatus status,

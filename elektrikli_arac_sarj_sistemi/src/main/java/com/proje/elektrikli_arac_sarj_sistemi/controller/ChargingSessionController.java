@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -62,7 +63,7 @@ public ResponseEntity<ChargingSessionResponse> markConnectorRemoved(@PathVariabl
         return ResponseEntity.ok(chargingSessionService.completeSession(id, energyConsumedKwh));
     }
 
-
+     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR', 'VIEWER')")
     @GetMapping("/search")
 public ResponseEntity<Page<ChargingSessionResponse>> search(
         @RequestParam(required = false) SessionStatus status,

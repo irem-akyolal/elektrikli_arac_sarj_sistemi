@@ -14,6 +14,7 @@ import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -50,7 +51,8 @@ public class ProvisionController {
     public ResponseEntity<ProvisionResponse> close(@PathVariable UUID id) {
         return ResponseEntity.ok(provisionService.close(id));
     }
-
+    
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR', 'VIEWER')")
     @GetMapping("/search")
         public ResponseEntity<Page<ProvisionResponse>> search(
         @RequestParam(required = false) ProvisionStatus status,

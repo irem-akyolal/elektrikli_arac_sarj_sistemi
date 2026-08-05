@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -31,6 +32,7 @@ public class ConnectorController {
         this.connectorAdminService = connectorAdminService;
     }
 
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR')")
     @PostMapping
     public ResponseEntity<ConnectorResponse> create(@Valid @RequestBody ConnectorCreateRequest request) {
         ConnectorResponse response = connectorService.create(request);
@@ -47,12 +49,16 @@ public class ConnectorController {
         return ResponseEntity.ok(connectorService.getByEvseId(evseId));
     }
 
+
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR')")
     @PatchMapping("/{id}/unit-price")
     public ResponseEntity<ConnectorResponse> updateUnitPrice(
             @PathVariable UUID id, @RequestParam BigDecimal price) {
         return ResponseEntity.ok(connectorService.updateUnitPrice(id, price));
     }
 
+
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR', 'VIEWER')")
     @GetMapping("/search")
     public ResponseEntity<Page<ConnectorResponse>> search(
         @RequestParam(required = false) ConnectorStandard standard,

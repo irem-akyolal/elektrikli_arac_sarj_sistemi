@@ -38,7 +38,8 @@ public class PaymentController {
     public ResponseEntity<PaymentResponse> getById(@PathVariable UUID id) {
         return ResponseEntity.ok(paymentService.getById(id));
     }
-
+    
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR', 'VIEWER')")
     @GetMapping("/search")
       public ResponseEntity<Page<PaymentResponse>> search(
         @RequestParam(required = false) PaymentStatus status,

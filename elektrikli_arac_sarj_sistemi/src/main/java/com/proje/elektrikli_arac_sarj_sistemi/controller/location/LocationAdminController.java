@@ -20,18 +20,20 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/admin/locations")
-@PreAuthorize("hasRole('ADMIN')")
 @RequiredArgsConstructor
 public class LocationAdminController {
 
     private final LocationAdminService locationAdminService;
 
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR')")
     @PostMapping
     public ResponseEntity<LocationResponse> create(@Valid @RequestBody LocationCreateRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(locationAdminService.create(request));
     }
 
+    
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR')")
     @PutMapping("/{id}")
     public ResponseEntity<LocationResponse> update(
             @PathVariable UUID id,
@@ -39,22 +41,28 @@ public class LocationAdminController {
         return ResponseEntity.ok(locationAdminService.update(id, request));
     }
 
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     @PatchMapping("/{id}/activate")
     public ResponseEntity<LocationResponse> activate(@PathVariable UUID id) {
         return ResponseEntity.ok(locationAdminService.activate(id));
     }
 
+
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     @PatchMapping("/{id}/deactivate")
     public ResponseEntity<Void> deactivate(@PathVariable UUID id) {
         locationAdminService.deactivate(id);
         return ResponseEntity.noContent().build();
     }
 
+
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR', 'VIEWER')")
     @GetMapping("/{id}")
     public ResponseEntity<LocationResponse> getById(@PathVariable UUID id) {
         return ResponseEntity.ok(locationAdminService.getById(id));
     }
-
+    
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR', 'VIEWER')")
     @GetMapping
     public ResponseEntity<Page<LocationResponse>> getAllWithFilters(
             @RequestParam(required = false) String name,
@@ -64,6 +72,7 @@ public class LocationAdminController {
         return ResponseEntity.ok(locationAdminService.getAllWithFilters(name, city, active, pageable));
     }
 
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR', 'VIEWER')")
     @GetMapping("/all")
     public ResponseEntity<List<LocationResponse>> getAll() {
         return ResponseEntity.ok(locationAdminService.getAll());

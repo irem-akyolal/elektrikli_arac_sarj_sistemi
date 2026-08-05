@@ -44,11 +44,15 @@ public class AdminUserService {
         return adminUserMapper.toResponse(savedAdmin);
     }
 
+
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public AdminUserResponse getById(UUID id) {
         AdminUser adminUser = findAdminUser(id);
         return adminUserMapper.toResponse(adminUser);
     }
 
+
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public List<AdminUserResponse> getAll() {
         return adminUserRepository.findAll()
                 .stream()
@@ -56,6 +60,7 @@ public class AdminUserService {
                 .toList();
     }
 
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     @Transactional
     public void deactivate(UUID id) {
         AdminUser adminUser = findAdminUser(id);

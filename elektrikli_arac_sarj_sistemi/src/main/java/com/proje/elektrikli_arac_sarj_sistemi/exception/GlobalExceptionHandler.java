@@ -74,6 +74,23 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
+
+
+      @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+      public ResponseEntity<ErrorResponse> handleNoResourceFound(
+        org.springframework.web.servlet.resource.NoResourceFoundException ex, HttpServletRequest request) {
+
+           logger.warn("Bulunamayan endpoint çağrıldı: {}", request.getRequestURI());
+
+        ErrorResponse error = new ErrorResponse(
+            HttpStatus.NOT_FOUND.value(),
+            "ENDPOINT_NOT_FOUND",
+            "İstenen kaynak bulunamadı.",
+            request.getRequestURI()
+    );
+    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+}
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnexpected(
             Exception ex, HttpServletRequest request) {
