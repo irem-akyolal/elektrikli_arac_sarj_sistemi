@@ -14,18 +14,20 @@ import com.proje.elektrikli_arac_sarj_sistemi.ocpi.OcpiClient;
 import com.proje.elektrikli_arac_sarj_sistemi.ocpi.dto.OcpiConnectorDto;
 import com.proje.elektrikli_arac_sarj_sistemi.ocpi.dto.OcpiEvseDto;
 import com.proje.elektrikli_arac_sarj_sistemi.ocpi.dto.OcpiLocationDto;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import java.math.BigDecimal;
-
-
 @Service
 public class OcpiLocationSyncService {
+
+    private static final Logger log = LoggerFactory.getLogger(OcpiLocationSyncService.class);
 
     private final OcpiClient ocpiClient;
     private final LocationRepository locationRepository;
@@ -42,76 +44,59 @@ public class OcpiLocationSyncService {
         this.connectorRepository = connectorRepository;
     }
 
-   @Transactional
-   public void syncLocations() {
+    @Transactional
+    public void syncLocations() {
 
-    var ocpiLocations = ocpiClient.fetchLocations();
+        var ocpiLocations = ocpiClient.fetchLocations();
 
-       // boş response veya null kontrolü bütün lokasyonlar deactive edileceği için kritik. Bu yüzden exception fırlatıyoruz.
         if (ocpiLocations == null) {
-        throw new IllegalStateException(
-                "OCPI location response is null"
-        );
-    }
+            throw new IllegalStateException("OCPI location response is null");
+        }
 
-    if (ocpiLocations.isEmpty()) {
-        throw new IllegalStateException(
-                "OCPI location response is empty. Sync cancelled."
-        );
-    }
+        if (ocpiLocations.isEmpty()) {
+            throw new IllegalStateException("OCPI location response is empty. Sync cancelled.");
+        }
 
-    Set<String> activeOcpiLocationIds = ocpiLocations.stream()
-            .map(OcpiLocationDto::getId)
-            .collect(Collectors.toSet());
+        Set<String> activeOcpiLocationIds = ocpiLocations.stream()
+                .map(OcpiLocationDto::getId)
+                .collect(Collectors.toSet());
 
-    for (OcpiLocationDto ocpiLocation : ocpiLocations) {
+        for (OcpiLocationDto ocpiLocation : ocpiLocations) {
 
-        if (ocpiLocation.getId() == null ||
-            ocpiLocation.getId().isBlank()) {
-
-        throw new IllegalStateException(
-                "OCPI location ID is missing"
-        );
-    }
-
-        Location location = upsertLocation(ocpiLocation);
-
-        if (ocpiLocation.getEvses() == null) {
-            continue;
-    }
-        for (OcpiEvseDto ocpiEvse : ocpiLocation.getEvses()) {
-
-
-              if (ocpiEvse.getUid() == null ||
-                    ocpiEvse.getUid().isBlank()) {
-
-                throw new IllegalStateException(
-                        "OCPI EVSE UID is missing"
-                );
+            if (ocpiLocation.getId() == null || ocpiLocation.getId().isBlank()) {
+                throw new IllegalStateException("OCPI location ID is missing");
             }
 
+            Location location = upsertLocation(ocpiLocation);
 
-            Evse evse = upsertEvse(ocpiEvse, location);
-
-            if (ocpiEvse.getConnectors() == null) {
-            continue;
+            if (ocpiLocation.getEvses() == null) {
+                continue;
             }
-            for (OcpiConnectorDto ocpiConnector : ocpiEvse.getConnectors()) {
 
-                 if (ocpiConnector.getId() == null ||
-                        ocpiConnector.getId().isBlank()) {
+            for (OcpiEvseDto ocpiEvse : ocpiLocation.getEvses()) {
 
-                    throw new IllegalStateException(
-                            "OCPI connector ID is missing"
-                    );
+                if (ocpiEvse.getUid() == null || ocpiEvse.getUid().isBlank()) {
+                    throw new IllegalStateException("OCPI EVSE UID is missing");
                 }
-                upsertConnector(ocpiConnector, evse);
+
+                Evse evse = upsertEvse(ocpiEvse, location);
+
+                if (ocpiEvse.getConnectors() == null) {
+                    continue;
+                }
+
+                for (OcpiConnectorDto ocpiConnector : ocpiEvse.getConnectors()) {
+
+                    if (ocpiConnector.getId() == null || ocpiConnector.getId().isBlank()) {
+                        throw new IllegalStateException("OCPI connector ID is missing");
+                    }
+                    upsertConnector(ocpiConnector, evse);
+                }
             }
         }
-    }
 
-    deactivateMissingLocations(activeOcpiLocationIds);
-  }
+        deactivateMissingLocations(activeOcpiLocationIds);
+    }
 
     // ============================
     // Private Methods — Upsert Mantığı
@@ -172,61 +157,87 @@ public class OcpiLocationSyncService {
     // ============================
 
     private EvseStatus mapEvseStatus(String ocpiStatus) {
-    if (ocpiStatus == null) return EvseStatus.UNKNOWN;
+        if (ocpiStatus == null) return EvseStatus.UNKNOWN;
 
-    return switch (ocpiStatus) {
-        case "AVAILABLE" -> EvseStatus.AVAILABLE;
-        case "BLOCKED" -> EvseStatus.BLOCKED;
-        case "CHARGING" -> EvseStatus.CHARGING;
-        case "INOPERATIVE" -> EvseStatus.INOPERATIVE;
-        case "OUTOFORDER" -> EvseStatus.OUT_OF_ORDER; // cpo tarafından gelen isim bizim tututuğumuz ile farklı olabilir diye elle eşleştirme yapıyoruz.
-        case "PLANNED" -> EvseStatus.PLANNED;
-        case "REMOVED" -> EvseStatus.REMOVED;
-        case "RESERVED" -> EvseStatus.RESERVED;
-        default -> EvseStatus.UNKNOWN;
-    };
-}
+        return switch (ocpiStatus) {
+            case "AVAILABLE" -> EvseStatus.AVAILABLE;
+            case "BLOCKED" -> EvseStatus.BLOCKED;
+            case "CHARGING" -> EvseStatus.CHARGING;
+            case "INOPERATIVE" -> EvseStatus.INOPERATIVE;
+            case "OUTOFORDER" -> EvseStatus.OUT_OF_ORDER;// cpo tarafından gelen isim bizim tututuğumuz ile farklı olabilir diye elle eşleştirme yapıyoruz.
+            case "PLANNED" -> EvseStatus.PLANNED;
+            case "REMOVED" -> EvseStatus.REMOVED;
+            case "RESERVED" -> EvseStatus.RESERVED;
+            default -> EvseStatus.UNKNOWN;
+        };
+    }
+
     private ConnectorStandard mapConnectorStandard(String ocpiStandard) {
-     if (ocpiStandard == null) return ConnectorStandard.UNKNOWN;
-      try {
-        return ConnectorStandard.valueOf(ocpiStandard.toUpperCase());
-         } catch (IllegalArgumentException ex) {
-        return ConnectorStandard.UNKNOWN;
-         }
-     }
+        if (ocpiStandard == null) return ConnectorStandard.UNKNOWN;
+        try {
+            return ConnectorStandard.valueOf(ocpiStandard.toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            log.warn("Bilinmeyen OCPI connector standard değeri: {}", ocpiStandard);
+            return ConnectorStandard.UNKNOWN;
+        }
+    }
 
+    // DÜZELTİLDİ: artık try-catch var, bilinmeyen değer sistemi çökertmiyor
     private ConnectorFormat mapConnectorFormat(String ocpiFormat) {
-        return ConnectorFormat.valueOf(ocpiFormat);
+        if (ocpiFormat == null) return ConnectorFormat.SOCKET; // güvenli varsayılan
+
+        try {
+            return ConnectorFormat.valueOf(ocpiFormat.toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            log.warn("Bilinmeyen OCPI connector format değeri: {}", ocpiFormat);
+            return ConnectorFormat.SOCKET;
+        }
     }
 
+    // artık try-catch var
     private PowerType mapPowerType(String ocpiPowerType) {
-        return PowerType.valueOf(ocpiPowerType);
+        if (ocpiPowerType == null) return PowerType.AC_1_PHASE; // güvenli varsayılan
+
+        try {
+            return PowerType.valueOf(ocpiPowerType.toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            log.warn("Bilinmeyen OCPI power type değeri: {}", ocpiPowerType);
+            return PowerType.AC_1_PHASE;
+        }
     }
 
-
+    // ============================
+    // Deactivation Mantığı
+    // ============================
 
     private void deactivateMissingLocations(Set<String> activeOcpiLocationIds) {
 
-    var locations = locationRepository.findAll();
+        var locations = locationRepository.findAll();
 
-    for (Location location : locations) {
+        for (Location location : locations) {
 
-        if (!activeOcpiLocationIds.contains(location.getOcpiLocationId())) {
+            if (!activeOcpiLocationIds.contains(location.getOcpiLocationId())) {
 
-            location.setActive(false);
-            location.setDeletedAt(LocalDateTime.now());
+                location.setActive(false);
+                location.setDeletedAt(LocalDateTime.now());
+                locationRepository.save(location); //  açık save
 
-            for (Evse evse : location.getEvses()) {
+                for (Evse evse : location.getEvses()) {
+                    evse.setDeletedAt(LocalDateTime.now());
+                    evseRepository.save(evse); //  açık save
 
-                evse.setDeletedAt(LocalDateTime.now());
-
-                for (Connector connector : evse.getConnectors()) {
-                    connector.setDeletedAt(LocalDateTime.now());
+                    for (Connector connector : evse.getConnectors()) {
+                        connector.setDeletedAt(LocalDateTime.now());
+                        connectorRepository.save(connector); // açık save
+                    }
                 }
             }
-
-            locationRepository.save(location);
         }
     }
 }
-}
+
+
+
+
+
+// cpo tarafından gelen isim bizim tututuğumuz ile farklı olabilir diye elle eşleştirme yapıyoruz.

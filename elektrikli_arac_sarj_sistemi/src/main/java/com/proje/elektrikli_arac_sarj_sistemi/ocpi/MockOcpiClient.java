@@ -1,6 +1,7 @@
 
 package com.proje.elektrikli_arac_sarj_sistemi.ocpi;
 
+import com.proje.elektrikli_arac_sarj_sistemi.ocpi.dto.OcpiCdrDto;
 import com.proje.elektrikli_arac_sarj_sistemi.ocpi.dto.OcpiConnectorDto;
 import com.proje.elektrikli_arac_sarj_sistemi.ocpi.dto.OcpiCoordinatesDto;
 import com.proje.elektrikli_arac_sarj_sistemi.ocpi.dto.OcpiEvseDto;
@@ -80,6 +81,13 @@ public class MockOcpiClient implements OcpiClient {
     @Override
     public void stopSession(String ocpiSessionId) {
         // Mock: gerçek bir işlem yapmıyoruz
+    }
+
+    @Override
+    public List<OcpiCdrDto> fetchNewCdrs() {
+    // Gerçek CPO entegrasyonu gelene kadar boş liste döndürüyoruz.
+    // Test için OcpiController'daki /cdr/process endpoint'ini kullanacağız.
+    return List.of();
     }
 }
 
