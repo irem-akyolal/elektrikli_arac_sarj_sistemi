@@ -3,6 +3,9 @@ package com.proje.elektrikli_arac_sarj_sistemi.controller.location;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.location.LocationResponse;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.location.LocationDetailResponse;
 import com.proje.elektrikli_arac_sarj_sistemi.service.location.LocationPublicService;
+import com.proje.elektrikli_arac_sarj_sistemi.util.PageableValidator;
+import com.proje.elektrikli_arac_sarj_sistemi.util.SortFields;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +23,7 @@ import java.util.UUID;
 public class LocationPublicController {
 
     private final LocationPublicService locationPublicService;
+    private final PageableValidator pageableValidator;
 
     //  Tüm aktif lokasyonlar (filtresiz)
     @GetMapping("/active")
@@ -35,17 +39,23 @@ public class LocationPublicController {
 
     //  Filtreli arama (isim, şehir, konnektör tipi, müsaitlik)
     @GetMapping("/search")
-    public ResponseEntity<Page<LocationResponse>> searchLocations(
+    public ResponseEntity<Page<LocationResponse>> searchActiveLocations(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String city,
             @RequestParam(required = false) String connectorType,
             @RequestParam(required = false) Boolean onlyAvailable,
             @PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
 
+         pageableValidator.validate(pageable, SortFields.PUBLIC_LOCATION);
+
         return ResponseEntity.ok(
-                locationPublicService.searchActiveLocations(
-                        name, city, connectorType, onlyAvailable, pageable
-                )
-        );
+              locationPublicService.searchActiveLocations(
+                name,
+                city,
+                connectorType,
+                onlyAvailable,
+                pageable
+        )
+);
     }
 }

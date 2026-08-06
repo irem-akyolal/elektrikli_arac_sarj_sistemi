@@ -47,19 +47,64 @@ public class OcpiLocationSyncService {
 
     var ocpiLocations = ocpiClient.fetchLocations();
 
+       // boş response veya null kontrolü bütün lokasyonlar deactive edileceği için kritik. Bu yüzden exception fırlatıyoruz.
+        if (ocpiLocations == null) {
+        throw new IllegalStateException(
+                "OCPI location response is null"
+        );
+    }
+
+    if (ocpiLocations.isEmpty()) {
+        throw new IllegalStateException(
+                "OCPI location response is empty. Sync cancelled."
+        );
+    }
+
     Set<String> activeOcpiLocationIds = ocpiLocations.stream()
             .map(OcpiLocationDto::getId)
             .collect(Collectors.toSet());
 
     for (OcpiLocationDto ocpiLocation : ocpiLocations) {
 
+        if (ocpiLocation.getId() == null ||
+            ocpiLocation.getId().isBlank()) {
+
+        throw new IllegalStateException(
+                "OCPI location ID is missing"
+        );
+    }
+
         Location location = upsertLocation(ocpiLocation);
 
+        if (ocpiLocation.getEvses() == null) {
+            continue;
+    }
         for (OcpiEvseDto ocpiEvse : ocpiLocation.getEvses()) {
+
+
+              if (ocpiEvse.getUid() == null ||
+                    ocpiEvse.getUid().isBlank()) {
+
+                throw new IllegalStateException(
+                        "OCPI EVSE UID is missing"
+                );
+            }
+
 
             Evse evse = upsertEvse(ocpiEvse, location);
 
+            if (ocpiEvse.getConnectors() == null) {
+            continue;
+            }
             for (OcpiConnectorDto ocpiConnector : ocpiEvse.getConnectors()) {
+
+                 if (ocpiConnector.getId() == null ||
+                        ocpiConnector.getId().isBlank()) {
+
+                    throw new IllegalStateException(
+                            "OCPI connector ID is missing"
+                    );
+                }
                 upsertConnector(ocpiConnector, evse);
             }
         }

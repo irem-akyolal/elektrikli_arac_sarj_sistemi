@@ -6,6 +6,9 @@ import com.proje.elektrikli_arac_sarj_sistemi.dto.connector.ConnectorCreateReque
 import com.proje.elektrikli_arac_sarj_sistemi.dto.connector.ConnectorResponse;
 import com.proje.elektrikli_arac_sarj_sistemi.service.connector.ConnectorAdminService;
 import com.proje.elektrikli_arac_sarj_sistemi.service.connector.ConnectorService;
+import com.proje.elektrikli_arac_sarj_sistemi.util.SortFields;
+import com.proje.elektrikli_arac_sarj_sistemi.util.PageableValidator;
+
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,10 +29,12 @@ public class ConnectorController {
 
     private final ConnectorService connectorService;
     private final ConnectorAdminService connectorAdminService;
+    private final PageableValidator pageableValidator;
 
-    public ConnectorController(ConnectorService connectorService, ConnectorAdminService connectorAdminService) {
+    public ConnectorController(ConnectorService connectorService, ConnectorAdminService connectorAdminService, PageableValidator pageableValidator) {
         this.connectorService = connectorService;
         this.connectorAdminService = connectorAdminService;
+        this.pageableValidator = pageableValidator;
     }
 
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR')")
@@ -65,8 +70,17 @@ public class ConnectorController {
         @RequestParam(required = false) PowerType powerType,
         @RequestParam(required = false) UUID evseId,
         Pageable pageable) {
-         return ResponseEntity.ok(connectorAdminService.search(standard, powerType, evseId, pageable));
 
-}
+    pageableValidator.validate(pageable, SortFields.ADMIN_CONNECTOR);
+
+      return ResponseEntity.ok(
+            connectorAdminService.search(
+                    standard,
+                    powerType,
+                    evseId,
+                    pageable
+            )
+    );
+   }
 
 }

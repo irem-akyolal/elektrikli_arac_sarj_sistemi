@@ -5,9 +5,12 @@ import com.proje.elektrikli_arac_sarj_sistemi.dto.evse.EvseCreateRequest;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.evse.EvseResponse;
 import com.proje.elektrikli_arac_sarj_sistemi.service.evse.EvseAdminService;
 import com.proje.elektrikli_arac_sarj_sistemi.service.evse.EvseService;
+import com.proje.elektrikli_arac_sarj_sistemi.util.PageableValidator;
+import com.proje.elektrikli_arac_sarj_sistemi.util.SortFields;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+
 
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -24,10 +27,12 @@ public class EvseController {
 
     private final EvseService evseService;
     private final EvseAdminService evseAdminService;
+    private final PageableValidator pageableValidator;
 
-    public EvseController(EvseService evseService, EvseAdminService evseAdminService) {
+    public EvseController(EvseService evseService, EvseAdminService evseAdminService, PageableValidator pageableValidator) {
         this.evseService = evseService;
         this.evseAdminService = evseAdminService;
+        this.pageableValidator = pageableValidator;
     }
     
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR')")
@@ -53,13 +58,18 @@ public class EvseController {
         return ResponseEntity.ok(evseService.updateStatus(id, status));
     }
     
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR', 'VIEWER')")
-    @GetMapping("/search")
+   @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR', 'VIEWER')")
+   @GetMapping("/search")
     public ResponseEntity<Page<EvseResponse>> search(
         @RequestParam(required = false) EvseStatus status,
         @RequestParam(required = false) UUID locationId,
         Pageable pageable) {
-            return ResponseEntity.ok(evseAdminService.search(status, locationId, pageable));   
-}
+
+    pageableValidator.validate(pageable, SortFields.ADMIN_EVSE);
+
+    return ResponseEntity.ok(
+            evseAdminService.search(status, locationId, pageable)
+    );
+   }
 
 }

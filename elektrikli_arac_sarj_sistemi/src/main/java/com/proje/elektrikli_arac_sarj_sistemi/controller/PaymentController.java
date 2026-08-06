@@ -4,6 +4,9 @@ import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.PaymentStatus;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.payment.PaymentResponse;
 import com.proje.elektrikli_arac_sarj_sistemi.service.payment.PaymentAdminService;
 import com.proje.elektrikli_arac_sarj_sistemi.service.payment.PaymentService;
+import com.proje.elektrikli_arac_sarj_sistemi.util.SortFields;
+import com.proje.elektrikli_arac_sarj_sistemi.util.PageableValidator;
+
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,10 +24,12 @@ public class PaymentController {
 
     private final PaymentService paymentService;
     private final PaymentAdminService paymentAdminService;
+    private final PageableValidator pageableValidator;
 
-    public PaymentController(PaymentService paymentService, PaymentAdminService paymentAdminService) {
+    public PaymentController(PaymentService paymentService, PaymentAdminService paymentAdminService, PageableValidator pageableValidator) {
         this.paymentService = paymentService;
         this.paymentAdminService = paymentAdminService;
+        this.pageableValidator = pageableValidator;
     }
 
     // Sadece admin panel için — otomatik süreç başarısız olduysa manuel tetikleme
@@ -41,10 +46,19 @@ public class PaymentController {
     
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR', 'VIEWER')")
     @GetMapping("/search")
-      public ResponseEntity<Page<PaymentResponse>> search(
+    public ResponseEntity<Page<PaymentResponse>> search(
         @RequestParam(required = false) PaymentStatus status,
         @RequestParam(required = false) String transactionId,
         Pageable pageable) {
-    return ResponseEntity.ok(paymentAdminService.search(status, transactionId, pageable));
-}
+
+    pageableValidator.validate(pageable, SortFields.ADMIN_PAYMENT);
+
+      return ResponseEntity.ok(
+            paymentAdminService.search(
+                    status,
+                    transactionId,
+                    pageable
+            )
+    );
+   }
 }

@@ -75,6 +75,21 @@ public class GlobalExceptionHandler {
     }
 
 
+    @ExceptionHandler(InvalidPageRequestException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidPageRequest(
+        InvalidPageRequestException ex,
+        HttpServletRequest request) {
+
+       ErrorResponse errorResponse = new ErrorResponse(
+            HttpStatus.BAD_REQUEST.value(),
+            "INVALID_PAGE_REQUEST",
+            ex.getMessage(),
+            request.getRequestURI()
+       );
+
+      return ResponseEntity.badRequest().body(errorResponse);
+  }
+
 
       @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
       public ResponseEntity<ErrorResponse> handleNoResourceFound(

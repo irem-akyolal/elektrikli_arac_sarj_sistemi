@@ -31,6 +31,7 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 // Public — kimlik doğrulama gerektirmeyen endpoint'ler
+                .requestMatchers("/api/public/**").permitAll()
                 .requestMatchers("/api/auth/login").permitAll()
                 .requestMatchers("/api/locations/active", "/api/locations/active/**").permitAll()
                  .requestMatchers("/api/charging-sessions/start",

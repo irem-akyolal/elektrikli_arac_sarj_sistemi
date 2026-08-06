@@ -5,6 +5,8 @@ import com.proje.elektrikli_arac_sarj_sistemi.dto.provision.ProvisionCreateReque
 import com.proje.elektrikli_arac_sarj_sistemi.dto.provision.ProvisionResponse;
 import com.proje.elektrikli_arac_sarj_sistemi.service.provision.ProvisionAdminService;
 import com.proje.elektrikli_arac_sarj_sistemi.service.provision.ProvisionService;
+import com.proje.elektrikli_arac_sarj_sistemi.util.SortFields;
+import com.proje.elektrikli_arac_sarj_sistemi.util.PageableValidator;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,10 +28,12 @@ public class ProvisionController {
 
     private final ProvisionService provisionService;
     private final ProvisionAdminService provisionAdminService;
+    private final PageableValidator pageableValidator;
 
-    public ProvisionController(ProvisionService provisionService, ProvisionAdminService provisionAdminService) {
+    public ProvisionController(ProvisionService provisionService, ProvisionAdminService provisionAdminService, PageableValidator pageableValidator) {
         this.provisionService = provisionService;
         this.provisionAdminService = provisionAdminService;
+        this.pageableValidator = pageableValidator;
     }
 
     @PostMapping
@@ -54,11 +58,27 @@ public class ProvisionController {
     
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR', 'VIEWER')")
     @GetMapping("/search")
-        public ResponseEntity<Page<ProvisionResponse>> search(
+    public ResponseEntity<Page<ProvisionResponse>> search(
         @RequestParam(required = false) ProvisionStatus status,
-        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime closedAfter,
-        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime closedBefore,
+        @RequestParam(required = false)
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+        LocalDateTime closedAfter,
+
+        @RequestParam(required = false)
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+        LocalDateTime closedBefore,
+
         Pageable pageable) {
-    return ResponseEntity.ok(provisionAdminService.search(status, closedAfter, closedBefore, pageable));
-}
+
+    pageableValidator.validate(pageable, SortFields.ADMIN_PROVISION);
+
+      return ResponseEntity.ok(
+            provisionAdminService.search(
+                    status,
+                    closedAfter,
+                    closedBefore,
+                    pageable
+            )
+    );
+   }
 }

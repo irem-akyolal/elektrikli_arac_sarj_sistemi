@@ -6,11 +6,13 @@ import com.proje.elektrikli_arac_sarj_sistemi.ocpi.dto.OcpiCoordinatesDto;
 import com.proje.elektrikli_arac_sarj_sistemi.ocpi.dto.OcpiEvseDto;
 import com.proje.elektrikli_arac_sarj_sistemi.ocpi.dto.OcpiLocationDto;
 import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Profile;
 
 import java.time.Instant;
 import java.util.List;
 
 @Component
+@Profile("mock")
 public class MockOcpiClient implements OcpiClient {
 
     @Override

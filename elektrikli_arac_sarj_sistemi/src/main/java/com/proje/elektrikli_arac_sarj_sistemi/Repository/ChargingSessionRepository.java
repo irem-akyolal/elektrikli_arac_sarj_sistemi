@@ -26,7 +26,7 @@ public interface ChargingSessionRepository extends JpaRepository<ChargingSession
     @Query("SELECT COUNT(cs) FROM ChargingSession cs WHERE cs.status = 'COMPLETED' AND cs.completedAt >= :startOfDay")
     long countCompletedSince(@Param("startOfDay") LocalDateTime startOfDay);
 
-    List<ChargingSession> findByStatusAndStartedAtBefore(SessionStatus status, LocalDateTime dateTime); // scheduler için: belirli bir tarihten önce başlatılmış ve halen CHARGING durumunda olan session'ları bulmak yani zaman aşımı kontrolü için
+    
 
     
 }
