@@ -89,6 +89,23 @@ public class GlobalExceptionHandler {
 
       return ResponseEntity.badRequest().body(errorResponse);
   }
+  // rate limiting için yazıldı
+      @ExceptionHandler(RateLimitExceededException.class)
+      public ResponseEntity<ErrorResponse> handleRateLimitExceeded(
+        RateLimitExceededException ex,
+        HttpServletRequest request) {
+
+    ErrorResponse response = new ErrorResponse(
+            HttpStatus.TOO_MANY_REQUESTS.value(),
+            "RATE_LIMIT_EXCEEDED",
+            ex.getMessage(),
+            request.getRequestURI()
+    );
+
+    return ResponseEntity
+            .status(HttpStatus.TOO_MANY_REQUESTS)
+            .body(response);
+   }
 
 
       @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
