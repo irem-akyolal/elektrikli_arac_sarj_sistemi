@@ -182,29 +182,30 @@ public class OcpiLocationSyncService {
         }
     }
 
-    // DÜZELTİLDİ: artık try-catch var, bilinmeyen değer sistemi çökertmiyor
+    // enumlara unknow konumunu ekledim çünkü cpo tarafından gelen değer bizim enumlarımızda olmayabilir ve bu durumda hata fırlatmak yerine bilinmeyen olarak işaretlemek daha mantıklı olur.
     private ConnectorFormat mapConnectorFormat(String ocpiFormat) {
-        if (ocpiFormat == null) return ConnectorFormat.SOCKET; // güvenli varsayılan
+    if (ocpiFormat == null) return ConnectorFormat.UNKNOWN;
 
-        try {
-            return ConnectorFormat.valueOf(ocpiFormat.toUpperCase());
-        } catch (IllegalArgumentException ex) {
-            log.warn("Bilinmeyen OCPI connector format değeri: {}", ocpiFormat);
-            return ConnectorFormat.SOCKET;
-        }
+    try {
+        return ConnectorFormat.valueOf(ocpiFormat.toUpperCase());
+    } catch (IllegalArgumentException ex) {
+        log.warn("Bilinmeyen OCPI connector format değeri: {}", ocpiFormat);
+        return ConnectorFormat.UNKNOWN;
     }
 
-    // artık try-catch var
+   }
+
+    // enumlara unknow konumunu ekledim çünkü cpo tarafından gelen değer bizim enumlarımızda olmayabilir ve bu durumda hata fırlatmak yerine bilinmeyen olarak işaretlemek daha mantıklı olur.
     private PowerType mapPowerType(String ocpiPowerType) {
-        if (ocpiPowerType == null) return PowerType.AC_1_PHASE; // güvenli varsayılan
+    if (ocpiPowerType == null) return PowerType.UNKNOWN;
 
-        try {
-            return PowerType.valueOf(ocpiPowerType.toUpperCase());
-        } catch (IllegalArgumentException ex) {
-            log.warn("Bilinmeyen OCPI power type değeri: {}", ocpiPowerType);
-            return PowerType.AC_1_PHASE;
-        }
+    try {
+        return PowerType.valueOf(ocpiPowerType.toUpperCase());
+    } catch (IllegalArgumentException ex) {
+        log.warn("Bilinmeyen OCPI power type değeri: {}", ocpiPowerType);
+        return PowerType.UNKNOWN;
     }
+  }  
 
     // ============================
     // Deactivation Mantığı

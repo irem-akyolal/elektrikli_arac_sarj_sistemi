@@ -3,6 +3,7 @@ package com.proje.elektrikli_arac_sarj_sistemi.controller.location;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.location.LocationResponse;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.location.LocationDetailResponse;
 import com.proje.elektrikli_arac_sarj_sistemi.service.location.LocationPublicService;
+import com.proje.elektrikli_arac_sarj_sistemi.util.LocationSearchValidator;
 import com.proje.elektrikli_arac_sarj_sistemi.util.PageableValidator;
 import com.proje.elektrikli_arac_sarj_sistemi.util.SortFields;
 
@@ -24,6 +25,7 @@ public class LocationPublicController {
 
     private final LocationPublicService locationPublicService;
     private final PageableValidator pageableValidator;
+    private final LocationSearchValidator locationSearchValidator;
 
     //  Tüm aktif lokasyonlar (filtresiz)
     @GetMapping("/active")
@@ -37,6 +39,14 @@ public class LocationPublicController {
         return ResponseEntity.ok(locationPublicService.getLocationDetail(id));
     }
 
+    @GetMapping("/nearby")
+    public ResponseEntity<List<LocationResponse>> getNearby(
+        @RequestParam double latitude,
+        @RequestParam double longitude,
+        @RequestParam(defaultValue = "10") double radiusKm) {
+          return ResponseEntity.ok(locationPublicService.getNearbyLocations(latitude, longitude, radiusKm));
+}
+
     //  Filtreli arama (isim, şehir, konnektör tipi, müsaitlik)
     @GetMapping("/search")
     public ResponseEntity<Page<LocationResponse>> searchActiveLocations(
@@ -46,9 +56,15 @@ public class LocationPublicController {
             @RequestParam(required = false) Boolean onlyAvailable,
             @PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
 
-         pageableValidator.validate(pageable, SortFields.PUBLIC_LOCATION);
+            locationSearchValidator.validate(
+            name,
+            city,
+            connectorType
+        );
 
-        return ResponseEntity.ok(
+            pageableValidator.validate(pageable, SortFields.PUBLIC_LOCATION);
+
+            return ResponseEntity.ok(
               locationPublicService.searchActiveLocations(
                 name,
                 city,

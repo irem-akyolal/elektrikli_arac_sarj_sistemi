@@ -75,20 +75,33 @@ public class GlobalExceptionHandler {
     }
 
 
-    @ExceptionHandler(InvalidPageRequestException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidPageRequest(
-        InvalidPageRequestException ex,
+      @ExceptionHandler(InvalidPageRequestException.class)
+       public ResponseEntity<ErrorResponse> handleInvalidPageRequest(
+        InvalidPageRequestException ex, HttpServletRequest request) {
+    ErrorResponse error = new ErrorResponse(
+            HttpStatus.BAD_REQUEST.value(), ex.getErrorCode(), ex.getMessage(), request.getRequestURI());
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+   }
+   
+
+   @ExceptionHandler(InvalidRequestParameterException.class)
+   public ResponseEntity<ErrorResponse> handleInvalidRequestParameterException(
+        InvalidRequestParameterException ex,
         HttpServletRequest request) {
 
-       ErrorResponse errorResponse = new ErrorResponse(
+    ErrorResponse errorResponse = new ErrorResponse(
             HttpStatus.BAD_REQUEST.value(),
-            "INVALID_PAGE_REQUEST",
+            "INVALID_REQUEST_PARAMETER",
             ex.getMessage(),
             request.getRequestURI()
-       );
+    );
 
-      return ResponseEntity.badRequest().body(errorResponse);
+    return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(errorResponse);
   }
+
+
   // rate limiting için yazıldı
       @ExceptionHandler(RateLimitExceededException.class)
       public ResponseEntity<ErrorResponse> handleRateLimitExceeded(

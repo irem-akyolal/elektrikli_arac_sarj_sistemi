@@ -1,5 +1,8 @@
 package com.proje.elektrikli_arac_sarj_sistemi.service;
 
+import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.ConnectorFormat;
+import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.ConnectorStandard;
+import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.PowerType;
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.SessionStatus;
 import com.proje.elektrikli_arac_sarj_sistemi.Repository.ChargingSessionRepository;
 import com.proje.elektrikli_arac_sarj_sistemi.Repository.ConnectorRepository;
@@ -42,6 +45,11 @@ public class DashboardService {
         long availableConnectors = connectorRepository.countAvailable();
         long activeSessions = chargingSessionRepository.countByStatus(SessionStatus.CHARGING);
         long todayCompletedSessions = chargingSessionRepository.countCompletedSince(startOfDay);
+     
+        long unknownStandardCount = connectorRepository.countByStandard(ConnectorStandard.UNKNOWN);
+        long unknownFormatCount = connectorRepository.countByFormat(ConnectorFormat.UNKNOWN);
+        long unknownPowerTypeCount = connectorRepository.countByPowerType(PowerType.UNKNOWN);
+        long unknownConnectorDataCount = unknownStandardCount + unknownFormatCount + unknownPowerTypeCount;
 
         var todayRevenue = paymentRepository.sumRevenueSince(startOfDay);
         var totalRevenue = paymentRepository.sumTotalRevenue();
@@ -50,7 +58,7 @@ public class DashboardService {
                 totalLocations, activeLocations,
                 totalConnectors, availableConnectors,
                 activeSessions, todayCompletedSessions,
-                todayRevenue, totalRevenue
+                todayRevenue, totalRevenue, unknownConnectorDataCount
         );
     }
 }

@@ -67,8 +67,8 @@ public class LocationAdminController {
     }
     
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR', 'VIEWER')")
-@GetMapping
-public ResponseEntity<Page<LocationResponse>> getAllWithFilters(
+    @GetMapping
+    public ResponseEntity<Page<LocationResponse>> getAllWithFilters(
         @RequestParam(required = false) String name,
         @RequestParam(required = false) String city,
         @RequestParam(required = false) Boolean active,

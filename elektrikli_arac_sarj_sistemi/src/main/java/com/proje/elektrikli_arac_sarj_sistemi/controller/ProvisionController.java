@@ -7,6 +7,7 @@ import com.proje.elektrikli_arac_sarj_sistemi.service.provision.ProvisionAdminSe
 import com.proje.elektrikli_arac_sarj_sistemi.service.provision.ProvisionService;
 import com.proje.elektrikli_arac_sarj_sistemi.util.SortFields;
 import com.proje.elektrikli_arac_sarj_sistemi.util.PageableValidator;
+import com.proje.elektrikli_arac_sarj_sistemi.util.ProvisionSearchValidator;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,11 +30,13 @@ public class ProvisionController {
     private final ProvisionService provisionService;
     private final ProvisionAdminService provisionAdminService;
     private final PageableValidator pageableValidator;
+    private final ProvisionSearchValidator provisionSearchValidator;
 
-    public ProvisionController(ProvisionService provisionService, ProvisionAdminService provisionAdminService, PageableValidator pageableValidator) {
+    public ProvisionController(ProvisionService provisionService, ProvisionAdminService provisionAdminService, PageableValidator pageableValidator, ProvisionSearchValidator provisionSearchValidator) {
         this.provisionService = provisionService;
         this.provisionAdminService = provisionAdminService;
         this.pageableValidator = pageableValidator;
+        this.provisionSearchValidator = provisionSearchValidator;
     }
 
     @PostMapping
@@ -69,6 +72,11 @@ public class ProvisionController {
         LocalDateTime closedBefore,
 
         Pageable pageable) {
+
+        provisionSearchValidator.validate(
+        closedAfter,
+        closedBefore
+   );
 
     pageableValidator.validate(pageable, SortFields.ADMIN_PROVISION);
 

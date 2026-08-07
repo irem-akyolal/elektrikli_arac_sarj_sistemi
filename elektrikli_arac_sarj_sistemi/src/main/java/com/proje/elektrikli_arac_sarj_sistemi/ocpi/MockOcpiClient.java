@@ -26,9 +26,12 @@ public class MockOcpiClient implements OcpiClient {
         OcpiLocationDto location2 =
                 createMockLocation("MOCKLOC2", "Mock İkinci İstasyon");
 
+        OcpiLocationDto location6 =
+                     createMockLocation("MOCKLOC6", "Test İçin Yeni Mock İstasyon");
+
         // Scheduler testi için yeni lokasyon
         
-        return List.of(location1, location2);
+        return List.of(location1, location2, location6);
     }
 
     private OcpiLocationDto createMockLocation(String id, String name) {

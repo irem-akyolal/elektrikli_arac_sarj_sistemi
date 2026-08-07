@@ -38,6 +38,7 @@ public class LocationSpecification {
         };
     }
 
+
     public static Specification<Location> isActive(Boolean active) {
         return (root, query, criteriaBuilder) -> {
             if (active == null) {

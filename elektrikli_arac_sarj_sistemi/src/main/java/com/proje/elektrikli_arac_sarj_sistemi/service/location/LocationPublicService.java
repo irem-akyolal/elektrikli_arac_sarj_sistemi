@@ -74,6 +74,15 @@ public class LocationPublicService {
         ));
     }
 
+
+      // konum tabanlı arama için yeni bir method ekledik.
+      @Transactional(readOnly = true)
+      public List<LocationResponse> getNearbyLocations(double latitude, double longitude, double radiusKm) {
+       List<Location> locations = locationRepository.findNearby(latitude, longitude, radiusKm);
+          return buildResponsesWithAvailability(locations); // az önce yazdığımız availability mantığını da kullanıyoruz
+}
+
+
     // ============================
     // Private Methods
     // ============================

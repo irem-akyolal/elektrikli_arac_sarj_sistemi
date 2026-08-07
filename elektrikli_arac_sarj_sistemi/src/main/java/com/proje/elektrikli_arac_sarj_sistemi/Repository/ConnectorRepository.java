@@ -36,4 +36,10 @@ public interface ConnectorRepository extends JpaRepository<Connector, UUID>, Jpa
 
     @Query("SELECT COUNT(c) FROM Connector c WHERE c.evse.status = com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.EvseStatus.AVAILABLE")
     long countAvailable(); // admin dashbord için
+
+
+// adm,n dashborad da kaç tane unknown power type, format ve standard var onu göstermek için
+long countByStandard(com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.ConnectorStandard standard);
+long countByFormat(com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.ConnectorFormat format);
+long countByPowerType(com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.PowerType powerType);
 }

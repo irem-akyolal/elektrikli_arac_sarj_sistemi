@@ -1,6 +1,11 @@
 package com.proje.elektrikli_arac_sarj_sistemi.util;
 
 import com.proje.elektrikli_arac_sarj_sistemi.exception.InvalidPageRequestException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
@@ -10,15 +15,15 @@ import java.util.Set;
 @Component
 public class PageableValidator {
     private static final int MAX_PAGE_SIZE = 50;
+    private static final Logger log = LoggerFactory.getLogger(PageableValidator.class);
+
 
     public void validate(Pageable pageable, Set<String> allowedSortFields) {
 
-    System.out.println("===== PAGEABLE VALIDATOR =====");
-    System.out.println("Page : " + pageable.getPageNumber());
-    System.out.println("Size : " + pageable.getPageSize());
+     log.debug("Pageable validation - page: {}, size: {}", pageable.getPageNumber(), pageable.getPageSize());
 
     for (Sort.Order order : pageable.getSort()) {
-        System.out.println("Sort : " + order.getProperty());
+        log.debug("Sort : {}", order.getProperty());
     }
 
     if (pageable.getPageNumber() < 0) {

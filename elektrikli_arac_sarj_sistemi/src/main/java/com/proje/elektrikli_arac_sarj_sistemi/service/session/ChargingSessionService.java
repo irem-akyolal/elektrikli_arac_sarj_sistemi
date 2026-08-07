@@ -75,10 +75,13 @@ public ChargingSessionResponse startSession(ChargingSessionStartRequest request)
         );
     }
 
+   
+
     ChargingSession session = new ChargingSession();
     session.setConnector(connector);
     session.setPlateNumber(request.getPlateNumber());
     session.setEmail(request.getEmail());
+    session.setOcpiSessionId(ocpiResult.getOcpiSessionId());
     session.setStatus(SessionStatus.STARTED);
     session.setStartedAt(LocalDateTime.now());
 

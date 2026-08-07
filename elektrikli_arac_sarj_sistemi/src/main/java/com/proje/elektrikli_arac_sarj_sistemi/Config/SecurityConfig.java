@@ -34,6 +34,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/public/**").permitAll()
                 .requestMatchers("/api/auth/login").permitAll()
                 .requestMatchers("/api/locations/active", "/api/locations/active/**").permitAll()
+                .requestMatchers("/api/public/locations/nearby").permitAll()
                  .requestMatchers("/api/charging-sessions/start",
                  "/api/charging-sessions/*/charging",
                  "/api/charging-sessions/*/complete",

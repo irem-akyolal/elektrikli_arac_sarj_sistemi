@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import com.proje.elektrikli_arac_sarj_sistemi.util.PageableValidator;
+import com.proje.elektrikli_arac_sarj_sistemi.util.ChargingSessionSearchValidator;
 
 
 import java.time.LocalDateTime;
@@ -31,12 +32,14 @@ public class ChargingSessionController {
     private final ChargingSessionService chargingSessionService;
     private final ChargingSessionAdminService chargingSessionAdminService;
     private final PageableValidator pageableValidator;
+    private final ChargingSessionSearchValidator chargingSessionSearchValidator;
 
 
-    public ChargingSessionController(ChargingSessionService chargingSessionService,ChargingSessionAdminService chargingSessionAdminService, PageableValidator pageableValidator) {
+    public ChargingSessionController(ChargingSessionService chargingSessionService,ChargingSessionAdminService chargingSessionAdminService, PageableValidator pageableValidator, ChargingSessionSearchValidator chargingSessionSearchValidator) {
         this.chargingSessionService = chargingSessionService;
         this.chargingSessionAdminService = chargingSessionAdminService;
         this.pageableValidator = pageableValidator;
+        this.chargingSessionSearchValidator = chargingSessionSearchValidator;
     }
 
     @PostMapping("/start")
@@ -81,6 +84,12 @@ public ResponseEntity<ChargingSessionResponse> markConnectorRemoved(@PathVariabl
         LocalDateTime startedBefore,
 
         Pageable pageable) {
+
+
+       chargingSessionSearchValidator.validate(
+        startedAfter,
+        startedBefore
+   );
 
     pageableValidator.validate(pageable, SortFields.ADMIN_CHARGING_SESSION);
 

@@ -29,6 +29,7 @@ public class Location extends BaseEntity {
     private String city;
     private String postalCode;
     private String country;
+    
 
     @Column(nullable = false)
     private Double latitude;
