@@ -12,6 +12,7 @@ import com.proje.elektrikli_arac_sarj_sistemi.dto.connector.ConnectorUpdateReque
 import com.proje.elektrikli_arac_sarj_sistemi.exception.BusinessRuleViolationException;
 import com.proje.elektrikli_arac_sarj_sistemi.exception.ResourceNotFoundException;
 import com.proje.elektrikli_arac_sarj_sistemi.mapper.ConnectorMapper;
+import com.proje.elektrikli_arac_sarj_sistemi.audit.AuditLogService;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -26,13 +27,16 @@ public class ConnectorService {
     private final ConnectorRepository connectorRepository;
     private final EvseRepository evseRepository;
     private final ConnectorMapper connectorMapper;
+    private final AuditLogService auditLogService;
 
     public ConnectorService(ConnectorRepository connectorRepository,
                              EvseRepository evseRepository,
-                             ConnectorMapper connectorMapper) {
+                             ConnectorMapper connectorMapper,
+                             AuditLogService auditLogService) {
         this.connectorRepository = connectorRepository;
         this.evseRepository = evseRepository;
         this.connectorMapper = connectorMapper;
+        this.auditLogService = auditLogService;
     }
     
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR')")
@@ -72,22 +76,99 @@ public class ConnectorService {
                 .toList();
     }
 
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR')")
-    @Auditable(action = AuditAction.UPDATE, entityType = "CONNECTOR")
-    @Transactional
-    public ConnectorResponse updateDetails(UUID id, ConnectorUpdateRequest request) {
-    Connector connector = findConnector(id); // zaten var olan private metod
+@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR')")
+@Transactional
+public ConnectorResponse updateDetails(UUID id, ConnectorUpdateRequest request) {
 
-    if (request.getStandard() != null) connector.setStandard(request.getStandard());
-    if (request.getFormat() != null) connector.setFormat(request.getFormat());
-    if (request.getPowerType() != null) connector.setPowerType(request.getPowerType());
-    if (request.getMaxVoltage() != null) connector.setMaxVoltage(request.getMaxVoltage());
-    if (request.getMaxAmperage() != null) connector.setMaxAmperage(request.getMaxAmperage());
-    if (request.getMaxElectricPowerWatt() != null) connector.setMaxElectricPowerWatt(request.getMaxElectricPowerWatt());
+    Connector connector = findConnector(id);
+
+    StringBuilder changes = new StringBuilder();
+
+    if (request.getStandard() != null &&
+            request.getStandard() != connector.getStandard()) {
+
+        changes.append("standard: '")
+                .append(connector.getStandard())
+                .append("' → '")
+                .append(request.getStandard())
+                .append("'; ");
+
+        connector.setStandard(request.getStandard());
+    }
+
+    if (request.getFormat() != null &&
+            request.getFormat() != connector.getFormat()) {
+
+        changes.append("format: '")
+                .append(connector.getFormat())
+                .append("' → '")
+                .append(request.getFormat())
+                .append("'; ");
+
+        connector.setFormat(request.getFormat());
+    }
+
+    if (request.getPowerType() != null &&
+            request.getPowerType() != connector.getPowerType()) {
+
+        changes.append("powerType: '")
+                .append(connector.getPowerType())
+                .append("' → '")
+                .append(request.getPowerType())
+                .append("'; ");
+
+        connector.setPowerType(request.getPowerType());
+    }
+
+    if (request.getMaxVoltage() != null &&
+            !request.getMaxVoltage().equals(connector.getMaxVoltage())) {
+
+        changes.append("maxVoltage: '")
+                .append(connector.getMaxVoltage())
+                .append("' → '")
+                .append(request.getMaxVoltage())
+                .append("'; ");
+
+        connector.setMaxVoltage(request.getMaxVoltage());
+    }
+
+    if (request.getMaxAmperage() != null &&
+            !request.getMaxAmperage().equals(connector.getMaxAmperage())) {
+
+        changes.append("maxAmperage: '")
+                .append(connector.getMaxAmperage())
+                .append("' → '")
+                .append(request.getMaxAmperage())
+                .append("'; ");
+
+        connector.setMaxAmperage(request.getMaxAmperage());
+    }
+
+    if (request.getMaxElectricPowerWatt() != null &&
+            !request.getMaxElectricPowerWatt().equals(connector.getMaxElectricPowerWatt())) {
+
+        changes.append("maxElectricPowerWatt: '")
+                .append(connector.getMaxElectricPowerWatt())
+                .append("' → '")
+                .append(request.getMaxElectricPowerWatt())
+                .append("'; ");
+
+        connector.setMaxElectricPowerWatt(request.getMaxElectricPowerWatt());
+    }
 
     Connector saved = connectorRepository.save(connector);
+
+    if (changes.length() > 0) {
+        auditLogService.logManual(
+                auditLogService.getCurrentUsername(),
+                AuditAction.UPDATE,
+                "CONNECTOR",
+                changes.toString()
+        );
+    }
+
     return connectorMapper.toResponse(saved);
-   }
+}
      
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR')")
     @Auditable(action = AuditAction.UPDATE, entityType = "CONNECTOR")

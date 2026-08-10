@@ -12,6 +12,7 @@ import com.proje.elektrikli_arac_sarj_sistemi.dto.evse.EvseResponse;
 import com.proje.elektrikli_arac_sarj_sistemi.exception.BusinessRuleViolationException;
 import com.proje.elektrikli_arac_sarj_sistemi.exception.ResourceNotFoundException;
 import com.proje.elektrikli_arac_sarj_sistemi.mapper.EvseMapper;
+import com.proje.elektrikli_arac_sarj_sistemi.audit.AuditLogService;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -26,13 +27,16 @@ public class EvseService {
     private final EvseRepository evseRepository;
     private final LocationRepository locationRepository;
     private final EvseMapper evseMapper;
+    private final AuditLogService auditLogService;
 
     public EvseService(EvseRepository evseRepository,
                         LocationRepository locationRepository,
-                        EvseMapper evseMapper) {
+                        EvseMapper evseMapper,
+                        AuditLogService auditLogService) {
         this.evseRepository = evseRepository;
         this.locationRepository = locationRepository;
         this.evseMapper = evseMapper;
+        this.auditLogService = auditLogService;
     }
 
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR')")
@@ -67,15 +71,37 @@ public class EvseService {
                 .toList();
     }
     
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR')")
-    @Auditable(action = AuditAction.UPDATE, entityType = "EVSE")
-    @Transactional
-    public EvseResponse updateStatus(UUID id, EvseStatus newStatus) {
-        Evse evse = findEvse(id);
-        evse.setStatus(newStatus);
-        Evse saved = evseRepository.save(evse);
-        return evseMapper.toResponse(saved);
+   @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR')")
+   @Transactional
+   public EvseResponse updateStatus(UUID id, EvseStatus newStatus) {
+
+    Evse evse = findEvse(id);
+
+    EvseStatus oldStatus = evse.getStatus();
+
+    if (oldStatus == newStatus) {
+        return evseMapper.toResponse(evse);
     }
+
+    evse.setStatus(newStatus);
+
+    Evse saved = evseRepository.save(evse);
+
+    String details = String.format(
+            "EVSE status changed: '%s' → '%s'",
+            oldStatus,
+            newStatus
+    );
+
+    auditLogService.logManual(
+            auditLogService.getCurrentUsername(),
+            AuditAction.UPDATE,
+            "EVSE",
+            details
+    );
+
+    return evseMapper.toResponse(saved);
+}
 
     // ============================
     // Private Methods

@@ -16,6 +16,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.proje.elektrikli_arac_sarj_sistemi.audit.AuditLogService;
 
 import java.util.List;
 import java.util.UUID;
@@ -27,7 +28,7 @@ public class LocationAdminService {
     private final LocationRepository locationRepository;
     private final LocationMapper locationMapper;
     private final LocationCoreService locationCoreService;
-
+    private final AuditLogService auditLogService;
     
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR')")
     @Auditable(action = AuditAction.CREATE, entityType = "LOCATION")
@@ -40,24 +41,125 @@ public class LocationAdminService {
     }
 
 
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR')")
-    @Auditable(action = AuditAction.UPDATE, entityType = "LOCATION")
-    @Transactional
-    public LocationResponse update(UUID id, LocationUpdateRequest request) {
-        Location location = locationCoreService.findLocation(id);
+@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR')")
+@Transactional
+public LocationResponse update(UUID id, LocationUpdateRequest request) {
 
-        if (request.getName() != null) location.setName(request.getName());
-        if (request.getAddress() != null) location.setAddress(request.getAddress());
-        if (request.getCity() != null) location.setCity(request.getCity());
-        if (request.getPostalCode() != null) location.setPostalCode(request.getPostalCode());
-        if (request.getCountry() != null) location.setCountry(request.getCountry());
-        if (request.getLatitude() != null) location.setLatitude(request.getLatitude());
-        if (request.getLongitude() != null) location.setLongitude(request.getLongitude());
-        if (request.getTimeZone() != null) location.setTimeZone(request.getTimeZone());
+    Location location = locationCoreService.findLocation(id);
 
-        Location updated = locationRepository.save(location);
-        return locationMapper.toResponse(updated);
+    StringBuilder changes = new StringBuilder();
+
+    if (request.getName() != null &&
+            !request.getName().equals(location.getName())) {
+
+        changes.append("name: '")
+                .append(location.getName())
+                .append("' → '")
+                .append(request.getName())
+                .append("'; ");
+
+        location.setName(request.getName());
     }
+
+    if (request.getAddress() != null &&
+            !request.getAddress().equals(location.getAddress())) {
+
+        changes.append("address: '")
+                .append(location.getAddress())
+                .append("' → '")
+                .append(request.getAddress())
+                .append("'; ");
+
+        location.setAddress(request.getAddress());
+    }
+
+    if (request.getCity() != null &&
+            !request.getCity().equals(location.getCity())) {
+
+        changes.append("city: '")
+                .append(location.getCity())
+                .append("' → '")
+                .append(request.getCity())
+                .append("'; ");
+
+        location.setCity(request.getCity());
+    }
+
+    if (request.getPostalCode() != null &&
+            !request.getPostalCode().equals(location.getPostalCode())) {
+
+        changes.append("postalCode: '")
+                .append(location.getPostalCode())
+                .append("' → '")
+                .append(request.getPostalCode())
+                .append("'; ");
+
+        location.setPostalCode(request.getPostalCode());
+    }
+
+    if (request.getCountry() != null &&
+            !request.getCountry().equals(location.getCountry())) {
+
+        changes.append("country: '")
+                .append(location.getCountry())
+                .append("' → '")
+                .append(request.getCountry())
+                .append("'; ");
+
+        location.setCountry(request.getCountry());
+    }
+
+    if (request.getLatitude() != null &&
+            !request.getLatitude().equals(location.getLatitude())) {
+
+        changes.append("latitude: '")
+                .append(location.getLatitude())
+                .append("' → '")
+                .append(request.getLatitude())
+                .append("'; ");
+
+        location.setLatitude(request.getLatitude());
+    }
+
+    if (request.getLongitude() != null &&
+            !request.getLongitude().equals(location.getLongitude())) {
+
+        changes.append("longitude: '")
+                .append(location.getLongitude())
+                .append("' → '")
+                .append(request.getLongitude())
+                .append("'; ");
+
+        location.setLongitude(request.getLongitude());
+    }
+
+    if (request.getTimeZone() != null &&
+            !request.getTimeZone().equals(location.getTimeZone())) {
+
+        changes.append("timeZone: '")
+                .append(location.getTimeZone())
+                .append("' → '")
+                .append(request.getTimeZone())
+                .append("'; ");
+
+        location.setTimeZone(request.getTimeZone());
+    }
+
+    Location updated = locationRepository.save(location);
+
+    // Gerçekten bir değişiklik olduysa audit log oluştur
+    if (!changes.isEmpty()) {
+
+        auditLogService.logManual(
+                auditLogService.getCurrentUsername(),
+                AuditAction.UPDATE,
+                "LOCATION",
+                changes.toString()
+        );
+    }
+
+    return locationMapper.toResponse(updated);
+}
 
     @PreAuthorize("hasRole('SUPER_ADMIN')") 
     @Transactional
