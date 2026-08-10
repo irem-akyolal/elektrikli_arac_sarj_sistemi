@@ -2,10 +2,12 @@ package com.proje.elektrikli_arac_sarj_sistemi.service.provision;
 
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.ChargingSession;
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.Provision;
+import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.AuditAction;
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.ProvisionStatus;
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.SessionStatus;
 import com.proje.elektrikli_arac_sarj_sistemi.Repository.ChargingSessionRepository;
 import com.proje.elektrikli_arac_sarj_sistemi.Repository.ProvisionRepository;
+import com.proje.elektrikli_arac_sarj_sistemi.audit.Auditable;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.provision.ProvisionCreateRequest;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.provision.ProvisionResponse;
 import com.proje.elektrikli_arac_sarj_sistemi.exception.BusinessRuleViolationException;
@@ -36,7 +38,9 @@ public class ProvisionService {
         this.provisionMapper = provisionMapper;
         this.paymentProviderClient = paymentProviderClient;
     }
+    
 
+    
     @Transactional
     public ProvisionResponse create(ProvisionCreateRequest request) {
         ChargingSession session = chargingSessionRepository.findById(request.getChargingSessionId())
@@ -69,6 +73,8 @@ public class ProvisionService {
     }
     }
 
+
+     @Auditable(action = AuditAction.APPROVE, entityType = "PROVISION")
     @Transactional
     public ProvisionResponse approve(UUID id) {
         Provision provision = findProvision(id);

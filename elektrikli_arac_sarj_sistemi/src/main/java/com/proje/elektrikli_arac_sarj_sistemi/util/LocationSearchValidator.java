@@ -12,10 +12,10 @@ import org.springframework.util.StringUtils;
 @Component
 public class LocationSearchValidator {
 
-    private static final int MIN_NAME_LENGTH = 2;
+    
     private static final int MAX_NAME_LENGTH = 100;
 
-    private static final int MIN_CITY_LENGTH = 2;
+   
     private static final int MAX_CITY_LENGTH = 50;
 
     public void validate(

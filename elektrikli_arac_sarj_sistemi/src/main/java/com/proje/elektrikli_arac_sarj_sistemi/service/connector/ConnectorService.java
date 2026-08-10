@@ -2,8 +2,10 @@ package com.proje.elektrikli_arac_sarj_sistemi.service.connector;
 
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.Connector;
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.Evse;
+import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.AuditAction;
 import com.proje.elektrikli_arac_sarj_sistemi.Repository.ConnectorRepository;
 import com.proje.elektrikli_arac_sarj_sistemi.Repository.EvseRepository;
+import com.proje.elektrikli_arac_sarj_sistemi.audit.Auditable;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.connector.ConnectorCreateRequest;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.connector.ConnectorResponse;
 import com.proje.elektrikli_arac_sarj_sistemi.exception.BusinessRuleViolationException;
@@ -33,6 +35,7 @@ public class ConnectorService {
     }
     
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR')")
+    @Auditable(action = AuditAction.CREATE, entityType = "CONNECTOR")
     @Transactional
     public ConnectorResponse create(ConnectorCreateRequest request) {
         validateOcpiConnectorId(request.getOcpiConnectorId());
@@ -69,6 +72,7 @@ public class ConnectorService {
     }
      
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR')")
+    @Auditable(action = AuditAction.UPDATE, entityType = "CONNECTOR")
     @Transactional
     public ConnectorResponse updateUnitPrice(UUID id, java.math.BigDecimal newPrice) {
         Connector connector = findConnector(id);

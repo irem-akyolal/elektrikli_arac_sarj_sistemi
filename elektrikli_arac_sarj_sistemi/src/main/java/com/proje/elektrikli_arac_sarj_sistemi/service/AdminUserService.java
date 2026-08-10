@@ -1,7 +1,9 @@
 package com.proje.elektrikli_arac_sarj_sistemi.service;
 
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.AdminUser;
+import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.AuditAction;
 import com.proje.elektrikli_arac_sarj_sistemi.Repository.AdminUserRepository;
+import com.proje.elektrikli_arac_sarj_sistemi.audit.Auditable;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.admin.AdminUserCreateRequest;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.admin.AdminUserResponse;
 import com.proje.elektrikli_arac_sarj_sistemi.exception.BusinessRuleViolationException;
@@ -33,6 +35,7 @@ public class AdminUserService {
 
     
     @PreAuthorize("hasRole('SUPER_ADMIN')")
+     @Auditable(action = AuditAction.CREATE, entityType = "ADMIN_USER")
     @Transactional
     public AdminUserResponse create(AdminUserCreateRequest request) {
         validateUsername(request.getUsername());
@@ -61,6 +64,7 @@ public class AdminUserService {
     }
 
     @PreAuthorize("hasRole('SUPER_ADMIN')")
+     @Auditable(action = AuditAction.DEACTIVATE, entityType = "ADMIN_USER")
     @Transactional
     public void deactivate(UUID id) {
         AdminUser adminUser = findAdminUser(id);

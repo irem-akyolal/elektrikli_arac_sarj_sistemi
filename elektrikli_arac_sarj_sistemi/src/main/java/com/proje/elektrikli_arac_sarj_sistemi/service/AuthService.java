@@ -1,7 +1,9 @@
 package com.proje.elektrikli_arac_sarj_sistemi.service;
 
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.AdminUser;
+import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.AuditAction;
 import com.proje.elektrikli_arac_sarj_sistemi.Repository.AdminUserRepository;
+import com.proje.elektrikli_arac_sarj_sistemi.audit.Auditable;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.auth.LoginRequest;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.auth.LoginResponse;
 import com.proje.elektrikli_arac_sarj_sistemi.exception.BusinessRuleViolationException;
@@ -27,6 +29,7 @@ public class AuthService {
         this.jwtService = jwtService;
     }
 
+    @Auditable(action = AuditAction.LOGIN, entityType = "ADMIN_USER")
     @Transactional
     public LoginResponse login(LoginRequest request) {
         AdminUser adminUser = adminUserRepository.findByUsername(request.getUsername())

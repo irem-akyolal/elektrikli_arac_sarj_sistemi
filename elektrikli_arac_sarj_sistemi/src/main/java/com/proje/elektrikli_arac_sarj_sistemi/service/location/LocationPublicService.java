@@ -80,7 +80,7 @@ public class LocationPublicService {
       public List<LocationResponse> getNearbyLocations(double latitude, double longitude, double radiusKm) {
        List<Location> locations = locationRepository.findNearby(latitude, longitude, radiusKm);
           return buildResponsesWithAvailability(locations); // az önce yazdığımız availability mantığını da kullanıyoruz
-}
+    }
 
 
     // ============================

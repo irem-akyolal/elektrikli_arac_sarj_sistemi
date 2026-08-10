@@ -1,7 +1,9 @@
 package com.proje.elektrikli_arac_sarj_sistemi.service.location;
 
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.Location;
+import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.AuditAction;
 import com.proje.elektrikli_arac_sarj_sistemi.Repository.LocationRepository;
+import com.proje.elektrikli_arac_sarj_sistemi.audit.Auditable;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.location.LocationCreateRequest;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.location.LocationResponse;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.location.LocationUpdateRequest;
@@ -26,8 +28,9 @@ public class LocationAdminService {
     private final LocationMapper locationMapper;
     private final LocationCoreService locationCoreService;
 
-
+    
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR')")
+    @Auditable(action = AuditAction.CREATE, entityType = "LOCATION")
     @Transactional
     public LocationResponse create(LocationCreateRequest request) {
         locationCoreService.validateOcpiLocationId(request.getOcpiLocationId());
@@ -38,6 +41,7 @@ public class LocationAdminService {
 
 
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR')")
+    @Auditable(action = AuditAction.UPDATE, entityType = "LOCATION")
     @Transactional
     public LocationResponse update(UUID id, LocationUpdateRequest request) {
         Location location = locationCoreService.findLocation(id);
@@ -64,6 +68,7 @@ public class LocationAdminService {
     }
     
     @PreAuthorize("hasRole('SUPER_ADMIN')") 
+    @Auditable(action = AuditAction.DEACTIVATE, entityType = "LOCATION")
     @Transactional
     public void deactivate(UUID id) {
         Location location = locationCoreService.findLocation(id);

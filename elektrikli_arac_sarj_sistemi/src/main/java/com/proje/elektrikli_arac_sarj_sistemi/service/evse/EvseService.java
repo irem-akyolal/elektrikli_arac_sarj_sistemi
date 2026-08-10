@@ -2,9 +2,11 @@ package com.proje.elektrikli_arac_sarj_sistemi.service.evse;
 
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.Evse;
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.Location;
+import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.AuditAction;
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.EvseStatus;
 import com.proje.elektrikli_arac_sarj_sistemi.Repository.EvseRepository;
 import com.proje.elektrikli_arac_sarj_sistemi.Repository.LocationRepository;
+import com.proje.elektrikli_arac_sarj_sistemi.audit.Auditable;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.evse.EvseCreateRequest;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.evse.EvseResponse;
 import com.proje.elektrikli_arac_sarj_sistemi.exception.BusinessRuleViolationException;
@@ -34,6 +36,7 @@ public class EvseService {
     }
 
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR')")
+    @Auditable(action = AuditAction.CREATE, entityType = "EVSE")
     @Transactional
     public EvseResponse create(EvseCreateRequest request) {
         validateOcpiEvseUid(request.getOcpiEvseUid());
@@ -65,6 +68,7 @@ public class EvseService {
     }
     
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR')")
+    @Auditable(action = AuditAction.UPDATE, entityType = "EVSE")
     @Transactional
     public EvseResponse updateStatus(UUID id, EvseStatus newStatus) {
         Evse evse = findEvse(id);
