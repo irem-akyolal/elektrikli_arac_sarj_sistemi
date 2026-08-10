@@ -4,6 +4,7 @@ import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.ConnectorStandard;
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.PowerType;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.connector.ConnectorCreateRequest;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.connector.ConnectorResponse;
+import com.proje.elektrikli_arac_sarj_sistemi.dto.connector.ConnectorUpdateRequest;
 import com.proje.elektrikli_arac_sarj_sistemi.service.connector.ConnectorAdminService;
 import com.proje.elektrikli_arac_sarj_sistemi.service.connector.ConnectorService;
 import com.proje.elektrikli_arac_sarj_sistemi.util.SortFields;
@@ -53,6 +54,13 @@ public class ConnectorController {
     public ResponseEntity<List<ConnectorResponse>> getByEvse(@RequestParam UUID evseId) {
         return ResponseEntity.ok(connectorService.getByEvseId(evseId));
     }
+
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<ConnectorResponse> updateDetails(
+        @PathVariable UUID id, @RequestBody ConnectorUpdateRequest request) {
+    return ResponseEntity.ok(connectorService.updateDetails(id, request));
+}
 
 
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR')")

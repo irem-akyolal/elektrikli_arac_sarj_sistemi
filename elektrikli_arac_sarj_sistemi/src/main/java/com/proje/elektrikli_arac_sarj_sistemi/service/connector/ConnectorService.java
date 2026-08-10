@@ -8,6 +8,7 @@ import com.proje.elektrikli_arac_sarj_sistemi.Repository.EvseRepository;
 import com.proje.elektrikli_arac_sarj_sistemi.audit.Auditable;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.connector.ConnectorCreateRequest;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.connector.ConnectorResponse;
+import com.proje.elektrikli_arac_sarj_sistemi.dto.connector.ConnectorUpdateRequest;
 import com.proje.elektrikli_arac_sarj_sistemi.exception.BusinessRuleViolationException;
 import com.proje.elektrikli_arac_sarj_sistemi.exception.ResourceNotFoundException;
 import com.proje.elektrikli_arac_sarj_sistemi.mapper.ConnectorMapper;
@@ -70,6 +71,23 @@ public class ConnectorService {
                 .map(connectorMapper::toResponse)
                 .toList();
     }
+
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR')")
+    @Auditable(action = AuditAction.UPDATE, entityType = "CONNECTOR")
+    @Transactional
+    public ConnectorResponse updateDetails(UUID id, ConnectorUpdateRequest request) {
+    Connector connector = findConnector(id); // zaten var olan private metod
+
+    if (request.getStandard() != null) connector.setStandard(request.getStandard());
+    if (request.getFormat() != null) connector.setFormat(request.getFormat());
+    if (request.getPowerType() != null) connector.setPowerType(request.getPowerType());
+    if (request.getMaxVoltage() != null) connector.setMaxVoltage(request.getMaxVoltage());
+    if (request.getMaxAmperage() != null) connector.setMaxAmperage(request.getMaxAmperage());
+    if (request.getMaxElectricPowerWatt() != null) connector.setMaxElectricPowerWatt(request.getMaxElectricPowerWatt());
+
+    Connector saved = connectorRepository.save(connector);
+    return connectorMapper.toResponse(saved);
+   }
      
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR')")
     @Auditable(action = AuditAction.UPDATE, entityType = "CONNECTOR")
