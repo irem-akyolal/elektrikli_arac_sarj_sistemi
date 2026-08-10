@@ -6,10 +6,12 @@ import com.proje.elektrikli_arac_sarj_sistemi.Entity.Payment;
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.InvoiceStatus;
 import com.proje.elektrikli_arac_sarj_sistemi.Repository.InvoiceRepository;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.invoice.InvoiceResponse;
+import com.proje.elektrikli_arac_sarj_sistemi.email.InvoiceCreatedEvent;
 import com.proje.elektrikli_arac_sarj_sistemi.exception.ResourceNotFoundException;
 import com.proje.elektrikli_arac_sarj_sistemi.mapper.InvoiceMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -23,10 +25,12 @@ public class InvoiceService {
 
     private final InvoiceRepository invoiceRepository;
     private final InvoiceMapper invoiceMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public InvoiceService(InvoiceRepository invoiceRepository, InvoiceMapper invoiceMapper) {
+    public InvoiceService(InvoiceRepository invoiceRepository, InvoiceMapper invoiceMapper, ApplicationEventPublisher eventPublisher) {
         this.invoiceRepository = invoiceRepository;
         this.invoiceMapper = invoiceMapper;
+        this.eventPublisher = eventPublisher;
     }
 
     // Otomatik akıştan çağrılıyor — Payment başarılı olunca tetikleniyor
@@ -54,6 +58,10 @@ public class InvoiceService {
         invoice.setStatus(InvoiceStatus.CREATED);
 
         Invoice saved = invoiceRepository.save(invoice);
+
+        eventPublisher.publishEvent( // Invoice oluşturuldu, transaction başarılı şekilde commit edilirse email sürecini başlat.
+        new InvoiceCreatedEvent(saved.getId())
+       );
         return invoiceMapper.toResponse(saved);
     }
 

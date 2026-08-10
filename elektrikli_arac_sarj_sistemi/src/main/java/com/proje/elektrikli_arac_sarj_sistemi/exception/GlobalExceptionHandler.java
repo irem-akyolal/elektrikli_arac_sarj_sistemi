@@ -136,6 +136,26 @@ public class GlobalExceptionHandler {
     return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
 }
 
+
+
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(
+        org.springframework.security.access.AccessDeniedException ex, HttpServletRequest request) {
+
+        String username = getCurrentUsernameForLog();
+         logger.warn("Yetkisiz erişim denemesi - Kullanıcı: {}, Path: {}", username, request.getRequestURI());
+
+    ErrorResponse error = new ErrorResponse(
+            HttpStatus.FORBIDDEN.value(), "ACCESS_DENIED",
+            "Bu işlem için yetkiniz yok.", request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+}
+
+private String getCurrentUsernameForLog() {
+    var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+    return (auth != null && auth.isAuthenticated()) ? auth.getName() : "UNKNOWN";
+}
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnexpected(
             Exception ex, HttpServletRequest request) {
