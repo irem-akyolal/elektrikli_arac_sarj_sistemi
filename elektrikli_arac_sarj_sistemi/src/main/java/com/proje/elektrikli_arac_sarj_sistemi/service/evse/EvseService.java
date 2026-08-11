@@ -97,6 +97,7 @@ public class EvseService {
             auditLogService.getCurrentUsername(),
             AuditAction.UPDATE,
             "EVSE",
+            id.toString(),
             details
     );
 

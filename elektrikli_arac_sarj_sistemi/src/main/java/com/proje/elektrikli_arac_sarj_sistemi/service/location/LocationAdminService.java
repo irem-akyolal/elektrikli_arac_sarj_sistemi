@@ -154,6 +154,7 @@ public LocationResponse update(UUID id, LocationUpdateRequest request) {
                 auditLogService.getCurrentUsername(),
                 AuditAction.UPDATE,
                 "LOCATION",
+                id.toString(),
                 changes.toString()
         );
     }

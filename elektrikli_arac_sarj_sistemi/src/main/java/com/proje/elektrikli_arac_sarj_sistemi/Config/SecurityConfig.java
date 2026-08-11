@@ -1,5 +1,6 @@
 package com.proje.elektrikli_arac_sarj_sistemi.Config;
 
+import com.proje.elektrikli_arac_sarj_sistemi.security.CustomAccessDeniedHandler;
 import com.proje.elektrikli_arac_sarj_sistemi.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,9 +15,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, CustomAccessDeniedHandler customAccessDeniedHandler) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.customAccessDeniedHandler = customAccessDeniedHandler;
     }
 
     @Bean
@@ -48,7 +52,14 @@ public class SecurityConfig {
                 .requestMatchers("/api/admin/**").hasAnyRole("SUPER_ADMIN", "OPERATOR", "VIEWER")
                 .anyRequest().authenticated()
             )
+
+             .exceptionHandling(exception ->
+                exception.accessDeniedHandler(customAccessDeniedHandler)
+            )
+            
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+          
 
         return http.build();
     }

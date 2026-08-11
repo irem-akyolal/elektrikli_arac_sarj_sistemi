@@ -38,26 +38,26 @@ public class AuthService {
 public LoginResponse login(LoginRequest request) {
     AdminUser adminUser = adminUserRepository.findByUsername(request.getUsername())
             .orElseThrow(() -> {
-                auditLogService.logManual(request.getUsername(), AuditAction.LOGIN, "ADMIN_USER", "FAILED - user not found");
+                auditLogService.logManual(request.getUsername(), AuditAction.LOGIN, "ADMIN_USER", "N/A", "FAILED - user not found");
                 return new BusinessRuleViolationException("INVALID_CREDENTIALS", "Kullanıcı adı veya şifre hatalı");
             });
 
     if (!adminUser.isActive()) {
-        auditLogService.logManual(request.getUsername(), AuditAction.LOGIN, "ADMIN_USER", "FAILED - account inactive");
+        auditLogService.logManual(request.getUsername(), AuditAction.LOGIN, "ADMIN_USER", "N/A", "FAILED - account inactive");
         throw new BusinessRuleViolationException("ACCOUNT_INACTIVE", "Bu hesap devre dışı bırakılmış");
     }
 
     if (!passwordEncoder.matches(request.getPassword(), adminUser.getPasswordHash())) {
-        auditLogService.logManual(request.getUsername(), AuditAction.LOGIN, "ADMIN_USER", "FAILED - wrong password");
+        auditLogService.logManual(request.getUsername(), AuditAction.LOGIN, "ADMIN_USER", "N/A", "FAILED - wrong password");
         throw new BusinessRuleViolationException("INVALID_CREDENTIALS", "Kullanıcı adı veya şifre hatalı");
     }
 
     adminUser.setLastLoginAt(LocalDateTime.now());
     adminUserRepository.save(adminUser);
 
-    auditLogService.logManual(adminUser.getUsername(), AuditAction.LOGIN, "ADMIN_USER", "SUCCESS");
+    auditLogService.logManual(adminUser.getUsername(), AuditAction.LOGIN, "ADMIN_USER", adminUser.getId().toString(), "SUCCESS");
 
     String token = jwtService.generateToken(adminUser.getUsername(), adminUser.getRole().name());
     return new LoginResponse(token, adminUser.getUsername(), adminUser.getRole().name());
-  }
+}
 }

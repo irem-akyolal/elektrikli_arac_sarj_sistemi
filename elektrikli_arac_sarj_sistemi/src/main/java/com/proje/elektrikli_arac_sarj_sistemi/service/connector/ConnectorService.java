@@ -163,6 +163,7 @@ public ConnectorResponse updateDetails(UUID id, ConnectorUpdateRequest request) 
                 auditLogService.getCurrentUsername(),
                 AuditAction.UPDATE,
                 "CONNECTOR",
+                id.toString(),
                 changes.toString()
         );
     }
