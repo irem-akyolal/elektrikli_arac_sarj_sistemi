@@ -1,8 +1,13 @@
 package com.proje.elektrikli_arac_sarj_sistemi.email;
 
-import org.springframework.mail.SimpleMailMessage;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+
+import java.io.File;
 
 @Service
 public class EmailService {
@@ -13,19 +18,55 @@ public class EmailService {
         this.mailSender = mailSender;
     }
 
-    public void sendInvoiceEmail(String to, String invoiceNumber) {
+    public void sendInvoiceEmail(
+            String to,
+            String invoiceNumber,
+            String pdfPath) {
 
-        SimpleMailMessage message = new SimpleMailMessage();
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
 
-        message.setTo(to);
-        message.setSubject("Elektrikli Araç Şarj Sistemi - Faturanız");
-        message.setText(
-                "Merhaba,\n\n"
-                + "Şarj işleminize ait faturanız oluşturulmuştur.\n\n"
-                + "Fatura No: " + invoiceNumber + "\n\n"
-                + "İyi günler."
-        );
+            MimeMessageHelper helper =
+                    new MimeMessageHelper(message, true);
 
-        mailSender.send(message);
+            helper.setTo(to);
+
+            helper.setSubject(
+                    "Elektrikli Araç Şarj Sistemi - Faturanız"
+            );
+
+            helper.setText(
+                    "Merhaba,\n\n"
+                    + "Şarj işleminize ait faturanız oluşturulmuştur.\n\n"
+                    + "Fatura No: " + invoiceNumber + "\n\n"
+                    + "Faturanızı PDF olarak ekte bulabilirsiniz.\n\n"
+                    + "İyi günler."
+            );
+
+            File pdfFile = new File(pdfPath);
+
+            if (!pdfFile.exists()) {
+                throw new IllegalStateException(
+                        "Fatura PDF dosyası bulunamadı: " + pdfPath
+                );
+            }
+
+            FileSystemResource pdfResource =
+                    new FileSystemResource(pdfFile);
+
+            helper.addAttachment(
+                    "Fatura-" + invoiceNumber + ".pdf",
+                    pdfResource
+            );
+
+            mailSender.send(message);
+
+        } catch (MessagingException e) {
+
+            throw new IllegalStateException(
+                    "Fatura emaili oluşturulamadı.",
+                    e
+            );
+        }
     }
 }

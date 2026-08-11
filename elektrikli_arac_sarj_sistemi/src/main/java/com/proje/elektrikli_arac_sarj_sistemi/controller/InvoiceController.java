@@ -1,7 +1,8 @@
 package com.proje.elektrikli_arac_sarj_sistemi.controller;
 
 import com.proje.elektrikli_arac_sarj_sistemi.dto.invoice.InvoiceResponse;
-import com.proje.elektrikli_arac_sarj_sistemi.service.InvoiceService;
+import com.proje.elektrikli_arac_sarj_sistemi.service.invoice.InvoiceService;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

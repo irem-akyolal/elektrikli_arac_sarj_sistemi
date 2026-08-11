@@ -39,9 +39,22 @@ public class InvoiceEmailProcessor {
 
         emailService.sendInvoiceEmail(
                 invoice.getEmail(),
-                invoice.getInvoiceNumber()
+                invoice.getInvoiceNumber(),
+                invoice.getPdfPath()
         );
 
         invoiceStatusService.markAsSent(invoiceId);
+    }
+
+    @Recover
+    public void recover(Exception exception, UUID invoiceId) {
+
+        invoiceStatusService.markAsFailed(invoiceId);
+
+        throw new IllegalStateException(
+                "Fatura email gönderimi tüm retry denemelerinde başarısız oldu: "
+                        + invoiceId,
+                exception
+        );
     }
 }

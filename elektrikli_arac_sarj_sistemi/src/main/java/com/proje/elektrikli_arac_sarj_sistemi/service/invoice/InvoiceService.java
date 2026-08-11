@@ -1,4 +1,4 @@
-package com.proje.elektrikli_arac_sarj_sistemi.service;
+package com.proje.elektrikli_arac_sarj_sistemi.service.invoice;
 
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.ChargingSession;
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.Invoice;
@@ -12,6 +12,7 @@ import com.proje.elektrikli_arac_sarj_sistemi.mapper.InvoiceMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.context.ApplicationEventPublisher;
+import com.proje.elektrikli_arac_sarj_sistemi.service.invoice.InvoicePdfService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -26,11 +27,13 @@ public class InvoiceService {
     private final InvoiceRepository invoiceRepository;
     private final InvoiceMapper invoiceMapper;
     private final ApplicationEventPublisher eventPublisher;
+    private final InvoicePdfService invoicePdfService;
 
-    public InvoiceService(InvoiceRepository invoiceRepository, InvoiceMapper invoiceMapper, ApplicationEventPublisher eventPublisher) {
+    public InvoiceService(InvoiceRepository invoiceRepository, InvoiceMapper invoiceMapper, ApplicationEventPublisher eventPublisher, InvoicePdfService invoicePdfService) {
         this.invoiceRepository = invoiceRepository;
         this.invoiceMapper = invoiceMapper;
         this.eventPublisher = eventPublisher;
+        this.invoicePdfService = invoicePdfService;
     }
 
     // Otomatik akıştan çağrılıyor — Payment başarılı olunca tetikleniyor
@@ -57,13 +60,21 @@ public class InvoiceService {
         invoice.setEmail(session.getEmail());
         invoice.setStatus(InvoiceStatus.CREATED);
 
-        Invoice saved = invoiceRepository.save(invoice);
+         Invoice saved = invoiceRepository.save(invoice);
 
-        eventPublisher.publishEvent( // Invoice oluşturuldu, transaction başarılı şekilde commit edilirse email sürecini başlat.
-        new InvoiceCreatedEvent(saved.getId())
-       );
-        return invoiceMapper.toResponse(saved);
+         String pdfPath = invoicePdfService.generateInvoicePdf(saved);
+
+        saved.setPdfPath(pdfPath);
+
+        Invoice updated = invoiceRepository.save(saved);
+
+        eventPublisher.publishEvent(
+        new InvoiceCreatedEvent(updated.getId())
+        );
+
+        return invoiceMapper.toResponse(updated);
     }
+
 
     public InvoiceResponse getById(UUID id) {
         Invoice invoice = findInvoice(id);
