@@ -2,7 +2,6 @@ package com.proje.elektrikli_arac_sarj_sistemi.email;
 
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.Invoice;
 import com.proje.elektrikli_arac_sarj_sistemi.Repository.InvoiceRepository;
-import org.springframework.resilience.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -12,49 +11,18 @@ public class InvoiceEmailProcessor {
 
     private final InvoiceRepository invoiceRepository;
     private final EmailService emailService;
-    private final InvoiceStatusService invoiceStatusService;
 
-    public InvoiceEmailProcessor(
-            InvoiceRepository invoiceRepository,
-            EmailService emailService,
-            InvoiceStatusService invoiceStatusService) {
-
+    public InvoiceEmailProcessor(InvoiceRepository invoiceRepository, EmailService emailService) {
         this.invoiceRepository = invoiceRepository;
         this.emailService = emailService;
-        this.invoiceStatusService = invoiceStatusService;
     }
 
-    @Retryable(
-            maxRetries = 3,
-            delay = 2000,
-            multiplier = 2
-    )
+    // Retry mantığı artık burada değil, EmailQueueProcessor'da (dakikalar arayla, daha mantıklı)
     public void sendInvoice(UUID invoiceId) {
-
         Invoice invoice = invoiceRepository.findById(invoiceId)
-                .orElseThrow(() ->
-                        new IllegalStateException(
-                                "Email gönderilecek fatura bulunamadı: " + invoiceId
-                        ));
+                .orElseThrow(() -> new IllegalStateException(
+                        "Email gönderilecek fatura bulunamadı: " + invoiceId));
 
-        emailService.sendInvoiceEmail(
-                invoice.getEmail(),
-                invoice.getInvoiceNumber(),
-                invoice.getPdfPath()
-        );
-
-        invoiceStatusService.markAsSent(invoiceId);
-    }
-
-    @Recover
-    public void recover(Exception exception, UUID invoiceId) {
-
-        invoiceStatusService.markAsFailed(invoiceId);
-
-        throw new IllegalStateException(
-                "Fatura email gönderimi tüm retry denemelerinde başarısız oldu: "
-                        + invoiceId,
-                exception
-        );
+        emailService.sendInvoiceEmail(invoice.getEmail(), invoice.getInvoiceNumber(), invoice.getPdfPath());
     }
 }

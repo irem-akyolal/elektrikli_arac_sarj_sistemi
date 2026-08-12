@@ -16,23 +16,20 @@ public class EmailQueueProcessor {
 
     private final EmailQueueRepository emailQueueRepository;
     private final InvoiceEmailProcessor invoiceEmailProcessor;
+    private final InvoiceStatusService invoiceStatusService;
 
-    public EmailQueueProcessor(
-            EmailQueueRepository emailQueueRepository,
-            InvoiceEmailProcessor invoiceEmailProcessor) {
-
+    public EmailQueueProcessor(EmailQueueRepository emailQueueRepository,
+                                InvoiceEmailProcessor invoiceEmailProcessor,
+                                InvoiceStatusService invoiceStatusService) {
         this.emailQueueRepository = emailQueueRepository;
         this.invoiceEmailProcessor = invoiceEmailProcessor;
+        this.invoiceStatusService = invoiceStatusService;
     }
 
     @Transactional
     public void process(UUID queueId) {
-
         EmailQueue queue = emailQueueRepository.findById(queueId)
-                .orElseThrow(() ->
-                        new IllegalStateException(
-                                "Email queue kaydı bulunamadı: " + queueId
-                        ));
+                .orElseThrow(() -> new IllegalStateException("Email queue kaydı bulunamadı: " + queueId));
 
         if (queue.getStatus() != EmailQueueStatus.PENDING) {
             return;
@@ -40,32 +37,25 @@ public class EmailQueueProcessor {
 
         queue.setStatus(EmailQueueStatus.PROCESSING);
         queue.setAttemptCount(queue.getAttemptCount() + 1);
-
         emailQueueRepository.save(queue);
 
         try {
-
             invoiceEmailProcessor.sendInvoice(queue.getInvoiceId());
 
             queue.setStatus(EmailQueueStatus.SENT);
             queue.setSentAt(LocalDateTime.now());
             queue.setLastError(null);
+            invoiceStatusService.markAsSent(queue.getInvoiceId()); // artık burada çağrılıyor
 
         } catch (Exception e) {
-
             queue.setLastError(e.getMessage());
 
             if (queue.getAttemptCount() >= MAX_QUEUE_ATTEMPTS) {
-
                 queue.setStatus(EmailQueueStatus.FAILED);
-
+                invoiceStatusService.markAsFailed(queue.getInvoiceId()); // artık burada çağrılıyor
             } else {
-
                 queue.setStatus(EmailQueueStatus.PENDING);
-
-                queue.setNextAttemptAt(
-                        LocalDateTime.now().plusMinutes(5)
-                );
+                queue.setNextAttemptAt(LocalDateTime.now().plusMinutes(5));
             }
         }
 
