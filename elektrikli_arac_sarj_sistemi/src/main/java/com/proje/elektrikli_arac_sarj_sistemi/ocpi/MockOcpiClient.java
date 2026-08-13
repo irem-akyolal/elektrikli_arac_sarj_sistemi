@@ -21,17 +21,21 @@ public class MockOcpiClient implements OcpiClient {
 
         // Mevcut mock veriler
         OcpiLocationDto location1 =
-                createMockLocation("MOCKLOC1", "Güncellenmiş CPO İstasyonu");
+                    createMockLocation("MOCKLOC1", "Güncellenmiş CPO İstasyonu");
 
         OcpiLocationDto location2 =
-                createMockLocation("MOCKLOC2", "Mock İkinci İstasyon");
+                    createMockLocation("MOCKLOC2", "Mock İkinci İstasyon");
 
         OcpiLocationDto location6 =
-                     createMockLocation("MOCKLOC6", "Test İçin Yeni Mock İstasyon");
+                    createMockLocation("MOCKLOC6", "Test İçin Yeni Mock İstasyon");
+
+        OcpiLocationDto testLocation =
+                    createMockLocation("MOCKLOCTEST", "TEST Mock İstasyon");
+
 
         // Scheduler testi için yeni lokasyon
         
-        return List.of(location1, location2, location6);
+        return List.of(location1, location2, location6,testLocation);
     }
 
     private OcpiLocationDto createMockLocation(String id, String name) {

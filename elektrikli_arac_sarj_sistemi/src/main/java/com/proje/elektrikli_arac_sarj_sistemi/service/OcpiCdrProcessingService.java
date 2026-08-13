@@ -7,6 +7,7 @@ import com.proje.elektrikli_arac_sarj_sistemi.exception.ResourceNotFoundExceptio
 import com.proje.elektrikli_arac_sarj_sistemi.ocpi.OcpiClient;
 import com.proje.elektrikli_arac_sarj_sistemi.ocpi.dto.OcpiCdrDto;
 import com.proje.elektrikli_arac_sarj_sistemi.service.session.ChargingSessionService;
+import com.proje.elektrikli_arac_sarj_sistemi.ocpi.OcpiCdrFetcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -20,31 +21,34 @@ public class OcpiCdrProcessingService {
 
     private static final Logger logger = LoggerFactory.getLogger(OcpiCdrProcessingService.class);
 
-    private final OcpiClient ocpiClient;
+   
     private final ChargingSessionRepository chargingSessionRepository;
     private final ChargingSessionService chargingSessionService;
+    private final OcpiCdrFetcher ocpiCdrFetcher;
 
     public OcpiCdrProcessingService(OcpiClient ocpiClient,
                                      ChargingSessionRepository chargingSessionRepository,
-                                     ChargingSessionService chargingSessionService) {
-        this.ocpiClient = ocpiClient;
+                                     ChargingSessionService chargingSessionService,
+                                    OcpiCdrFetcher ocpiCdrFetcher) {
+        
         this.chargingSessionRepository = chargingSessionRepository;
         this.chargingSessionService = chargingSessionService;
+        this.ocpiCdrFetcher = ocpiCdrFetcher;
     }
 
-    @Transactional
+    
     public void processNewCdrs() {
-        List<OcpiCdrDto> cdrs = ocpiClient.fetchNewCdrs();
+        List<OcpiCdrDto> cdrs = ocpiCdrFetcher.fetchWithRetry(); 
 
         for (OcpiCdrDto cdr : cdrs) {
-            try {
-                processSingleCdr(cdr);
-            } catch (Exception ex) {
-                logger.error("CDR işlenirken hata oluştu. CDR ID: {}, Session ID: {}, Hata: {}",
-                        cdr.getId(), cdr.getSessionId(), ex.getMessage(), ex);
-            }
-        }
-    }
+           try {
+              processSingleCdr(cdr);
+           } catch (Exception ex) {
+               logger.error("CDR işlenirken hata oluştu. CDR ID: {}, Session ID: {}, Hata: {}",
+                    cdr.getId(), cdr.getSessionId(), ex.getMessage(), ex);
+           }
+       }
+   }
 
     @Transactional
     public void processCdrForSession(String ocpiSessionId, Double totalEnergy) {
