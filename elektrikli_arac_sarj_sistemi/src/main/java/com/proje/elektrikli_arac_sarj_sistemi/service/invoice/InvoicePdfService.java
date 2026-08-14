@@ -95,6 +95,7 @@ public class InvoicePdfService {
                     invoice.getTaxRate()
                             .multiply(BigDecimal.valueOf(100))
                             .stripTrailingZeros()
+                            .toPlainString()
                             + "%");
 
             addRow(table, "KDV Tutarı",

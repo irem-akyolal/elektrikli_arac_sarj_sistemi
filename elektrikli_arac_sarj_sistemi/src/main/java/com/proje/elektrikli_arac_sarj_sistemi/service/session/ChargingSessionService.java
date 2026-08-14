@@ -10,6 +10,9 @@ import com.proje.elektrikli_arac_sarj_sistemi.Repository.ChargingSessionReposito
 import com.proje.elektrikli_arac_sarj_sistemi.Repository.ConnectorRepository;
 import com.proje.elektrikli_arac_sarj_sistemi.Repository.EvseRepository;
 import com.proje.elektrikli_arac_sarj_sistemi.Repository.ProvisionRepository;
+import com.proje.elektrikli_arac_sarj_sistemi.dto.payment.PaymentCardInfoRequest;
+import com.proje.elektrikli_arac_sarj_sistemi.dto.provision.ProvisionCreateRequest;
+import com.proje.elektrikli_arac_sarj_sistemi.dto.provision.ProvisionResponse;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.session.ChargingSessionResponse;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.session.ChargingSessionStartRequest;
 import com.proje.elektrikli_arac_sarj_sistemi.exception.BusinessRuleViolationException;
@@ -18,6 +21,10 @@ import com.proje.elektrikli_arac_sarj_sistemi.mapper.ChargingSessionMapper;
 import com.proje.elektrikli_arac_sarj_sistemi.ocpi.OcpiClient;
 import com.proje.elektrikli_arac_sarj_sistemi.ocpi.StartSessionResult;
 import com.proje.elektrikli_arac_sarj_sistemi.service.payment.PaymentService;
+import com.proje.elektrikli_arac_sarj_sistemi.service.provision.ProvisionService;
+import com.proje.elektrikli_arac_sarj_sistemi.payment.PaymentProviderClient;
+
+
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +41,8 @@ public class ChargingSessionService {
      private final ProvisionRepository provisionRepository;
      private final ChargingSessionMapper chargingSessionMapper;
      private final PaymentService paymentService; // otomatik tahsilat için
+     private final PaymentProviderClient paymentProviderClient;
+     private final ProvisionService provisionService;
      private final OcpiClient ocpiClient; // dışarı akışı (sistem → CPO, Remote Start/Stop) Şarj Başlat" dediğimizde, gerçekten OCPI'ye (mock'a) bir istek gidecek
 
     public ChargingSessionService(ChargingSessionRepository chargingSessionRepository,
@@ -42,6 +51,8 @@ public class ChargingSessionService {
                                    ProvisionRepository provisionRepository,
                                    ChargingSessionMapper chargingSessionMapper,
                                    PaymentService paymentService,
+                                   ProvisionService provisionService,
+                                   PaymentProviderClient paymentProviderClient,
                                    OcpiClient ocpiClient) {
         this.chargingSessionRepository = chargingSessionRepository;
         this.connectorRepository = connectorRepository;
@@ -50,49 +61,181 @@ public class ChargingSessionService {
         this.chargingSessionMapper = chargingSessionMapper;
         this.paymentService = paymentService;
         this.ocpiClient = ocpiClient;
+        this.provisionService=provisionService;
+        this.paymentProviderClient = paymentProviderClient;
 
     }
 
-  @Transactional
-  public ChargingSessionResponse startSession(ChargingSessionStartRequest request) {
-    Connector connector = connectorRepository.findById(request.getConnectorId())
-            .orElseThrow(() -> new ResourceNotFoundException(
-                    "Konnektör bulunamadı: " + request.getConnectorId()));
+@Transactional
+public ChargingSessionResponse startSession(
+        ChargingSessionStartRequest request) {
+
+    // =====================================================
+    // 1. CONNECTOR KONTROLÜ
+    // =====================================================
+
+    Connector connector = connectorRepository.findById(
+            request.getConnectorId()
+    ).orElseThrow(() -> new ResourceNotFoundException(
+            "Konnektör bulunamadı: " + request.getConnectorId()
+    ));
 
     validateConnectorAvailable(connector);
 
 
-       // OCPI'ye Remote Start isteği gönder
-    StartSessionResult ocpiResult = ocpiClient.startSession(
-            connector.getEvse().getOcpiEvseUid(),
-            extractConnectorId(connector.getOcpiConnectorId())
-    );
-
-    if (!ocpiResult.isAccepted()) {
-        throw new BusinessRuleViolationException(
-                "OCPI_START_REJECTED",
-                "CPO şarj başlatma isteğini reddetti."
-        );
-    }
-
-   
+    // =====================================================
+    // 2. GEÇİCİ CHARGING SESSION OLUŞTUR
+    // =====================================================
+    // Henüz OCPI Remote Start gönderilmedi.
+    // Bu aşamada sadece sistemimizde session kaydı oluşturuyoruz.
 
     ChargingSession session = new ChargingSession();
+
     session.setConnector(connector);
     session.setPlateNumber(request.getPlateNumber());
     session.setEmail(request.getEmail());
-    session.setOcpiSessionId(ocpiResult.getOcpiSessionId());
     session.setStatus(SessionStatus.STARTED);
     session.setStartedAt(LocalDateTime.now());
 
-    ChargingSession saved = chargingSessionRepository.save(session);
+    ChargingSession savedSession =
+            chargingSessionRepository.save(session);
+
+
+    // =====================================================
+    // 3. PROVİZYON OLUŞTUR
+    // =====================================================
+
+    ProvisionCreateRequest provisionRequest =
+            new ProvisionCreateRequest();
+
+    provisionRequest.setChargingSessionId(
+            savedSession.getId()
+    );
+
+    provisionRequest.setRequestedAmount(
+            request.getRequestedAmount()
+    );
+
+    // Kart bilgileri
+    provisionRequest.setCardHolderName(
+            request.getPaymentCard().getCardHolderName()
+    );
+
+    provisionRequest.setCardNumber(
+            request.getPaymentCard().getCardNumber()
+    );
+
+    provisionRequest.setExpireMonth(
+            request.getPaymentCard().getExpireMonth()
+    );
+
+    provisionRequest.setExpireYear(
+            request.getPaymentCard().getExpireYear()
+    );
+
+    provisionRequest.setCvc(
+            request.getPaymentCard().getCvc()
+    );
+
+
+    // =====================================================
+    // 4. PROVİZYON KAYDI OLUŞTUR
+    // =====================================================
+
+    ProvisionResponse provision =
+            provisionService.create(provisionRequest);
+
+
+    // =====================================================
+    // 5. PRE-AUTH / PROVİZYON ONAYI
+    // =====================================================
+
+    PaymentCardInfoRequest cardRequest =
+            request.getPaymentCard();
+
+    ProvisionResponse approvedProvision =
+            provisionService.approve(
+                    provision.getId(),
+                    cardRequest
+            );
+
+
+    // =====================================================
+    // 6. PRE-AUTH BAŞARILIYSA OCPI REMOTE START
+    // =====================================================
+
+    StartSessionResult ocpiResult =
+            ocpiClient.startSession(
+                    connector.getEvse().getOcpiEvseUid(),
+                    extractConnectorId(
+                            connector.getOcpiConnectorId()
+                    )
+            );
+
+    if (!ocpiResult.isAccepted()) {
+
+    boolean cancelled =
+            paymentProviderClient.cancelProvision(
+                    approvedProvision.getProviderReferenceId()
+            );
+
+    if (!cancelled) {
+        throw new BusinessRuleViolationException(
+                "PROVISION_CANCEL_FAILED",
+                "CPO şarj başlatma isteğini reddetti ve "
+                        + "Iyzico provizyonu iptal edilemedi."
+        );
+    }
+
+    throw new BusinessRuleViolationException(
+            "OCPI_START_REJECTED",
+            "CPO şarj başlatma isteğini reddetti. "
+                    + "Iyzico provizyonu iptal edildi."
+    );
+}
+
+
+    /*
+         * Burada PRE-AUTH başarılı olmuş fakat
+         * OCPI Remote Start başarısız olmuş olabilir.
+         *
+         * Bu durumda ileride authorization release/
+         * cancellation mekanizması eklenmesi gerekir.
+         */
+
+
+    // =====================================================
+    // 7. OCPI SESSION ID'Yİ KAYDET
+    // =====================================================
+
+    savedSession.setOcpiSessionId(
+            ocpiResult.getOcpiSessionId()
+    );
+
+    ChargingSession finalSession =
+            chargingSessionRepository.save(savedSession);
+
+
+    // =====================================================
+    // 8. EVSE DURUMUNU CHARGING YAP
+    // =====================================================
 
     Evse evse = connector.getEvse();
-    evse.setStatus(EvseStatus.CHARGING);
-    evseRepository.save(evse); 
 
-    return chargingSessionMapper.toResponse(saved);
+    evse.setStatus(EvseStatus.CHARGING);
+
+    evseRepository.save(evse);
+
+
+    // =====================================================
+    // 9. SESSION'I GERİ DÖNDÜR
+    // =====================================================
+
+    return chargingSessionMapper.toResponse(finalSession);
 }
+
+
+
 
     public ChargingSessionResponse getById(UUID id) {
         ChargingSession session = findSession(id);
@@ -123,22 +266,29 @@ public ChargingSessionResponse markAsCharging(UUID id) {
 
 
 @Transactional
-public ChargingSessionResponse completeSession(UUID id, java.math.BigDecimal energyConsumedKwh) {
+public ChargingSessionResponse completeSession(
+        UUID id,
+        java.math.BigDecimal energyConsumedKwh) {
+
     ChargingSession session = findSession(id);
 
-    if (session.getStatus() != SessionStatus.STARTED && session.getStatus() != SessionStatus.CHARGING) {
+    // Şarj yalnızca gerçekten CHARGING durumundaysa tamamlanabilir.
+    if (session.getStatus() != SessionStatus.CHARGING) {
         throw new BusinessRuleViolationException(
                 "INVALID_SESSION_STATUS",
-                "Sadece aktif oturumlar tamamlanabilir. Şu anki durum: " + session.getStatus()
+                "Sadece CHARGING durumundaki oturumlar tamamlanabilir. Şu anki durum: "
+                        + session.getStatus()
         );
     }
 
     session.setStatus(SessionStatus.COMPLETED);
     session.setCompletedAt(LocalDateTime.now());
     session.setEnergyConsumedKwh(energyConsumedKwh);
-    ChargingSession saved = chargingSessionRepository.save(session);
 
-    // EVSE artık "müsait" değil, "fişin çekilmesi bekleniyor" durumunda
+    ChargingSession saved =
+            chargingSessionRepository.save(session);
+
+    // Şarj tamamlandı ancak kablo henüz çıkarılmadı.
     Evse evse = session.getConnector().getEvse();
     evse.setStatus(EvseStatus.PENDING_REMOVAL);
     evseRepository.save(evse);

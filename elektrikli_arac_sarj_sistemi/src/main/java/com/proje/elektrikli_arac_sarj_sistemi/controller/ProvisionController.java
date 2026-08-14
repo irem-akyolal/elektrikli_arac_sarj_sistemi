@@ -1,6 +1,7 @@
 package com.proje.elektrikli_arac_sarj_sistemi.controller;
 
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.ProvisionStatus;
+import com.proje.elektrikli_arac_sarj_sistemi.dto.payment.PaymentCardInfoRequest;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.provision.ProvisionCreateRequest;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.provision.ProvisionResponse;
 import com.proje.elektrikli_arac_sarj_sistemi.service.provision.ProvisionAdminService;
@@ -50,8 +51,13 @@ public class ProvisionController {
     }
 
     @PatchMapping("/{id}/approve")
-    public ResponseEntity<ProvisionResponse> approve(@PathVariable UUID id) {
-        return ResponseEntity.ok(provisionService.approve(id));
+    public ResponseEntity<ProvisionResponse> approve(
+        @PathVariable UUID id,
+        @Valid @RequestBody PaymentCardInfoRequest request) {
+
+    return ResponseEntity.ok(
+            provisionService.approve(id, request)
+        );
     }
 
     @PatchMapping("/{id}/close")

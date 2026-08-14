@@ -7,6 +7,8 @@ import com.proje.elektrikli_arac_sarj_sistemi.Repository.EmailQueueRepository;
 import com.proje.elektrikli_arac_sarj_sistemi.Repository.InvoiceRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 
@@ -15,6 +17,8 @@ public class EmailQueueService {
 
     private final EmailQueueRepository emailQueueRepository;
     private final InvoiceRepository invoiceRepository;
+    private static final Logger log = LoggerFactory.getLogger(EmailQueueService.class);
+
 
     public EmailQueueService(
             EmailQueueRepository emailQueueRepository,
@@ -42,6 +46,14 @@ public class EmailQueueService {
         queue.setAttemptCount(0);
         queue.setNextAttemptAt(LocalDateTime.now());
 
+        
+
+        log.info(">>> EmailQueue oluşturuluyor. Invoice: {}, Email: {}",
+        invoice.getId(),
+        invoice.getEmail());
+
         emailQueueRepository.save(queue);
+
+        log.info(">>> EmailQueue kaydedildi. Queue ID: {}", queue.getId());
     }
 }

@@ -1,5 +1,5 @@
 package com.proje.elektrikli_arac_sarj_sistemi.Entity.enums;
 
 public enum PaymentStatus {
-    AUTHORIZED, CAPTURED, REFUNDED, FAILED
+    AUTHORIZED, CAPTURED, PARTIALLY_REFUNDED, REFUNDED, FAILED
 }

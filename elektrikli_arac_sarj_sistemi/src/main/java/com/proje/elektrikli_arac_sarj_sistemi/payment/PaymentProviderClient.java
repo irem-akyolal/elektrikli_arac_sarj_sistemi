@@ -4,9 +4,22 @@ import java.math.BigDecimal;
 
 public interface PaymentProviderClient {
 
-    ProvisionAuthorizationResult authorizeProvision(BigDecimal amount);
+    ProvisionAuthorizationResult authorizeProvision(
+            BigDecimal amount,
+            PaymentCardInfo cardInfo
+    );
 
-    void closeProvision(String providerReferenceId);
+    CaptureResult captureAmount(
+            String providerReferenceId,
+            BigDecimal amount
+    );
 
-    CaptureResult captureAmount(String providerReferenceId, BigDecimal amount); // yeni eklenen
+    RefundResult refundAmount(
+            String paymentId,
+            BigDecimal amount
+    );
+
+    boolean cancelProvision(
+            String providerReferenceId
+    );
 }

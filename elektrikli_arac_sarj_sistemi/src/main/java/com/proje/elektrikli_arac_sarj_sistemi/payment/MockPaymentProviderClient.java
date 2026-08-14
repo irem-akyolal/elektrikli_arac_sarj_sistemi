@@ -1,4 +1,4 @@
-package com.proje.elektrikli_arac_sarj_sistemi.payment;
+/*package com.proje.elektrikli_arac_sarj_sistemi.payment;
 
 import org.springframework.stereotype.Component;
 
@@ -26,4 +26,4 @@ public class MockPaymentProviderClient implements PaymentProviderClient {
     String transactionId = "MOCK-TXN-" + System.currentTimeMillis();
     return new CaptureResult(true, transactionId);
 }
-}
+}*/

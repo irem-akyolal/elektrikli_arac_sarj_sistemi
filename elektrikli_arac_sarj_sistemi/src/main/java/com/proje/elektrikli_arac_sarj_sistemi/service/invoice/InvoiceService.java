@@ -9,10 +9,9 @@ import com.proje.elektrikli_arac_sarj_sistemi.dto.invoice.InvoiceResponse;
 import com.proje.elektrikli_arac_sarj_sistemi.email.InvoiceCreatedEvent;
 import com.proje.elektrikli_arac_sarj_sistemi.exception.ResourceNotFoundException;
 import com.proje.elektrikli_arac_sarj_sistemi.mapper.InvoiceMapper;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.context.ApplicationEventPublisher;
-
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -21,22 +20,21 @@ import java.util.UUID;
 @Service
 public class InvoiceService {
 
-    // Şimdilik sabit — ileride SystemParameter'dan okunacak (Faz 3'te)
     private static final BigDecimal TAX_RATE = new BigDecimal("0.20");
 
     private final InvoiceRepository invoiceRepository;
     private final InvoiceMapper invoiceMapper;
     private final ApplicationEventPublisher eventPublisher;
-    private final InvoicePdfService invoicePdfService;
 
-    public InvoiceService(InvoiceRepository invoiceRepository, InvoiceMapper invoiceMapper, ApplicationEventPublisher eventPublisher, InvoicePdfService invoicePdfService) {
+    public InvoiceService(InvoiceRepository invoiceRepository,
+                           InvoiceMapper invoiceMapper,
+                           ApplicationEventPublisher eventPublisher) {
         this.invoiceRepository = invoiceRepository;
         this.invoiceMapper = invoiceMapper;
         this.eventPublisher = eventPublisher;
-        this.invoicePdfService = invoicePdfService;
     }
 
-    // Otomatik akıştan çağrılıyor — Payment başarılı olunca tetikleniyor
+    // Artık PDF oluşturmuyor — sadece kaydı oluşturup event fırlatıyor, PDF+email arka planda
     @Transactional
     public InvoiceResponse generateForPayment(Payment payment) {
         ChargingSession session = payment.getProvision().getChargingSession();
@@ -60,21 +58,12 @@ public class InvoiceService {
         invoice.setEmail(session.getEmail());
         invoice.setStatus(InvoiceStatus.CREATED);
 
-         Invoice saved = invoiceRepository.save(invoice);
+        Invoice saved = invoiceRepository.save(invoice);
 
-         String pdfPath = invoicePdfService.generateInvoicePdf(saved);
+        eventPublisher.publishEvent(new InvoiceCreatedEvent(saved.getId()));
 
-        saved.setPdfPath(pdfPath);
-
-        Invoice updated = invoiceRepository.save(saved);
-
-        eventPublisher.publishEvent(
-        new InvoiceCreatedEvent(updated.getId())
-        );
-
-        return invoiceMapper.toResponse(updated);
+        return invoiceMapper.toResponse(saved);
     }
-
 
     public InvoiceResponse getById(UUID id) {
         Invoice invoice = findInvoice(id);
@@ -87,10 +76,6 @@ public class InvoiceService {
                         "Bu oturum için fatura bulunamadı: " + chargingSessionId));
         return invoiceMapper.toResponse(invoice);
     }
-
-    // ============================
-    // Private Methods
-    // ============================
 
     private String generateInvoiceNumber() {
         String candidate;

@@ -4,6 +4,8 @@ import com.proje.elektrikli_arac_sarj_sistemi.Entity.EmailQueue;
 import com.proje.elektrikli_arac_sarj_sistemi.Entity.enums.EmailQueueStatus;
 import com.proje.elektrikli_arac_sarj_sistemi.Repository.EmailQueueRepository;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -17,6 +19,7 @@ public class EmailQueueProcessor {
     private final EmailQueueRepository emailQueueRepository;
     private final InvoiceEmailProcessor invoiceEmailProcessor;
     private final InvoiceStatusService invoiceStatusService;
+      private static final Logger log = LoggerFactory.getLogger(EmailQueueProcessor.class);
 
     public EmailQueueProcessor(EmailQueueRepository emailQueueRepository,
                                 InvoiceEmailProcessor invoiceEmailProcessor,
@@ -47,17 +50,18 @@ public class EmailQueueProcessor {
             queue.setLastError(null);
             invoiceStatusService.markAsSent(queue.getInvoiceId()); // artık burada çağrılıyor
 
-        } catch (Exception e) {
-            queue.setLastError(e.getMessage());
+       } catch (Exception e) {
+              log.error("Email gönderimi başarısız - Queue ID: {}, Hata: {}", queue.getId(), e.getMessage(), e);
+                queue.setLastError(e.getMessage());
 
-            if (queue.getAttemptCount() >= MAX_QUEUE_ATTEMPTS) {
+             if (queue.getAttemptCount() >= MAX_QUEUE_ATTEMPTS) {
                 queue.setStatus(EmailQueueStatus.FAILED);
-                invoiceStatusService.markAsFailed(queue.getInvoiceId()); // artık burada çağrılıyor
-            } else {
-                queue.setStatus(EmailQueueStatus.PENDING);
-                queue.setNextAttemptAt(LocalDateTime.now().plusMinutes(5));
-            }
-        }
+                 invoiceStatusService.markAsFailed(queue.getInvoiceId());
+             } else {
+               queue.setStatus(EmailQueueStatus.PENDING);
+               queue.setNextAttemptAt(LocalDateTime.now().plusMinutes(5));
+          }
+       }
 
         emailQueueRepository.save(queue);
     }
