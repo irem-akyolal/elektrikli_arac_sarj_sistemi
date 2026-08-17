@@ -61,4 +61,13 @@ public final class SortFields {
             "completedAt",
             "createdAt"
     );
+
+
+    public static final Set<String> ADMIN_EMAIL_QUEUE =
+        Set.of(
+                "createdAt",
+                "sentAt",
+                "status",
+                "attemptCount"
+        );
 }
