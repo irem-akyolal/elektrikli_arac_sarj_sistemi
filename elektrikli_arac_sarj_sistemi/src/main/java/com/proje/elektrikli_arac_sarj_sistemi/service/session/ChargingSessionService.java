@@ -31,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.time.Duration;
 
 @Service
 public class ChargingSessionService {
@@ -44,7 +45,7 @@ public class ChargingSessionService {
      private final PaymentProviderClient paymentProviderClient;
      private final ProvisionService provisionService;
      private final OcpiClient ocpiClient; // dışarı akışı (sistem → CPO, Remote Start/Stop) Şarj Başlat" dediğimizde, gerçekten OCPI'ye (mock'a) bir istek gidecek
-
+     
     public ChargingSessionService(ChargingSessionRepository chargingSessionRepository,
                                    ConnectorRepository connectorRepository,
                                    EvseRepository evseRepository,
@@ -310,9 +311,19 @@ public ChargingSessionResponse markConnectorRemoved(UUID id) {
 
 
     ocpiClient.stopSession(session.getOcpiSessionId()); // CPO'ya bilgi ver
-    
-    session.setConnectorRemovedAt(LocalDateTime.now());
+    LocalDateTime removedAt = LocalDateTime.now();
+    session.setConnectorRemovedAt(removedAt);
+
+      long durationSeconds =
+        Duration.between(
+                session.getCompletedAt(),
+                removedAt
+        ).getSeconds();
+
+    session.setPendingRemovalDurationSeconds(durationSeconds);
+
     session.setStatus(SessionStatus.CLOSED); 
+
     ChargingSession saved = chargingSessionRepository.save(session);
 
     Evse evse = session.getConnector().getEvse();

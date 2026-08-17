@@ -37,6 +37,8 @@ public class ChargingSession extends BaseEntity {
 
     private String ocpiSessionId; // CPO tarafındaki oturum referansı
 
+    private Long pendingRemovalDurationSeconds;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private SessionStatus status;

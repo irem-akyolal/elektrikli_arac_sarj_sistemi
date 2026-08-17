@@ -18,11 +18,12 @@ public class ChargingSessionResponse {
     private LocalDateTime completedAt;
     private LocalDateTime connectorRemovedAt;
     private BigDecimal energyConsumedKwh;
+    private Long pendingRemovalDurationSeconds;
 
     public ChargingSessionResponse(UUID id, UUID connectorId, String plateNumber, String email,
                                     String ocpiSessionId, SessionStatus status,
                                     LocalDateTime startedAt, LocalDateTime completedAt,
-                                    LocalDateTime connectorRemovedAt, BigDecimal energyConsumedKwh) {
+                                    LocalDateTime connectorRemovedAt, BigDecimal energyConsumedKwh,Long pendingRemovalDurationSeconds ) {
         this.id = id;
         this.connectorId = connectorId;
         this.plateNumber = plateNumber;
@@ -33,6 +34,7 @@ public class ChargingSessionResponse {
         this.completedAt = completedAt;
         this.connectorRemovedAt = connectorRemovedAt;
         this.energyConsumedKwh = energyConsumedKwh;
+        this.pendingRemovalDurationSeconds = pendingRemovalDurationSeconds;
     }
 
     public UUID getId() { return id; }
@@ -45,4 +47,5 @@ public class ChargingSessionResponse {
     public LocalDateTime getCompletedAt() { return completedAt; }
     public LocalDateTime getConnectorRemovedAt() { return connectorRemovedAt; }
     public BigDecimal getEnergyConsumedKwh() { return energyConsumedKwh; }
+    public Long getPendingRemovalDurationSeconds() {return pendingRemovalDurationSeconds;}
 }

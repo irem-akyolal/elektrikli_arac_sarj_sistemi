@@ -18,7 +18,8 @@ public class ChargingSessionMapper {
                 session.getStartedAt(),
                 session.getCompletedAt(),
                 session.getConnectorRemovedAt(),
-                session.getEnergyConsumedKwh()
+                session.getEnergyConsumedKwh(),
+                session.getPendingRemovalDurationSeconds()
         );
     }
 }

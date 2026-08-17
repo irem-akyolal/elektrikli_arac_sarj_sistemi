@@ -14,10 +14,11 @@ import com.proje.elektrikli_arac_sarj_sistemi.exception.ResourceNotFoundExceptio
 import com.proje.elektrikli_arac_sarj_sistemi.mapper.PaymentMapper;
 import com.proje.elektrikli_arac_sarj_sistemi.payment.CaptureResult;
 import com.proje.elektrikli_arac_sarj_sistemi.payment.PaymentProviderClient;
-import com.proje.elektrikli_arac_sarj_sistemi.payment.RefundResult;
 import com.proje.elektrikli_arac_sarj_sistemi.service.invoice.InvoiceService;
 import com.proje.elektrikli_arac_sarj_sistemi.service.provision.ProvisionService;
 
+
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +34,7 @@ public class PaymentService {
     private final PaymentProviderClient paymentProviderClient;
     private final ProvisionService provisionService;
     private final InvoiceService invoiceService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public PaymentService(
             PaymentRepository paymentRepository,
@@ -40,7 +42,8 @@ public class PaymentService {
             PaymentMapper paymentMapper,
             PaymentProviderClient paymentProviderClient,
             ProvisionService provisionService,
-            InvoiceService invoiceService) {
+            InvoiceService invoiceService,
+            ApplicationEventPublisher eventPublisher) {
 
         this.paymentRepository = paymentRepository;
         this.provisionRepository = provisionRepository;
@@ -48,6 +51,7 @@ public class PaymentService {
         this.paymentProviderClient = paymentProviderClient;
         this.provisionService = provisionService;
         this.invoiceService = invoiceService;
+        this.eventPublisher = eventPublisher;
     }
 
     // Asıl ödeme akışı:
@@ -183,31 +187,16 @@ public class PaymentService {
         // 7. FAZLA TUTARI İADE ET
         // --------------------------------------------------
 
-        if (refundAmount.compareTo(BigDecimal.ZERO) > 0) {
+       if (refundAmount.compareTo(BigDecimal.ZERO) > 0) {
 
-            RefundResult refundResult =
-                    paymentProviderClient.refundAmount(
-                            captureResult.getTransactionId(),
-                            refundAmount
-                    );
-
-            if (!refundResult.isSuccess()) {
-
-                throw new BusinessRuleViolationException(
-                        "PAYMENT_REFUND_FAILED",
-                        "Fazla provizyon tutarının iadesi " +
-                        "ödeme kuruluşu tarafından gerçekleştirilemedi."
-                );
-            }
-
-            
-            saved.setStatus(
-                    PaymentStatus.PARTIALLY_REFUNDED
-            );
-
-            paymentRepository.save(saved);
-        }
-
+       eventPublisher.publishEvent(
+              new PaymentCapturedEvent(
+                    saved.getId(),
+                    captureResult.getTransactionId(),
+                    refundAmount
+             )
+      );
+   }  
         // --------------------------------------------------
         // 8. PROVİZYONU KAPAT
         // --------------------------------------------------
