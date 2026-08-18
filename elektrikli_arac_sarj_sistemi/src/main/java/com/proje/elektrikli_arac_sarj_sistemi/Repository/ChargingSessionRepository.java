@@ -26,7 +26,10 @@ public interface ChargingSessionRepository extends JpaRepository<ChargingSession
     @Query("SELECT COUNT(cs) FROM ChargingSession cs WHERE cs.status = 'COMPLETED' AND cs.completedAt >= :startOfDay")
     long countCompletedSince(@Param("startOfDay") LocalDateTime startOfDay);
 
-    
+    boolean existsByConnectorEvseIdAndStatusIn(
+        UUID evseId,
+        List<SessionStatus> statuses
+     );
 
     
 }

@@ -1,25 +1,27 @@
 import { useEffect, useRef } from "react";
-import {
-  setOptions,
-  importLibrary,
-} from "@googlemaps/js-api-loader";
 
-let googleMapsInitialized = false;
+import { loadGoogleMaps } from "../../utils/googleMapsLoader";
 
 function GoogleMap({
   locations,
   selectedLocation,
   onSelectLocation,
+  userLocation,
 }) {
   const mapRef = useRef(null);
+
   const mapInstanceRef = useRef(null);
+
   const markersRef = useRef([]);
+
+  const userMarkerRef = useRef(null);
 
   /*
    * =====================================================
    * MARKERLARI TEMİZLE
    * =====================================================
    */
+
   const clearMarkers = () => {
     markersRef.current.forEach((marker) => {
       marker.map = null;
@@ -34,13 +36,19 @@ function GoogleMap({
    * MARKERLARI OLUŞTUR
    * =====================================================
    */
+
   const createMarkers = (
     map,
     AdvancedMarkerElement
   ) => {
     clearMarkers();
 
+    if (!locations || locations.length === 0) {
+      return;
+    }
+
     locations.forEach((location) => {
+
       if (
         typeof location.latitude !== "number" ||
         typeof location.longitude !== "number"
@@ -58,6 +66,7 @@ function GoogleMap({
           },
 
           title: location.name,
+          gmpClickable: true,
         });
 
 
@@ -65,21 +74,11 @@ function GoogleMap({
        * =================================================
        * MARKER TIKLAMA
        * =================================================
-       *
-       * AdvancedMarkerElement için
-       * "click" yerine "gmp-click" kullanıyoruz.
        */
-      marker.addEventListener(
-        "gmp-click",
-        () => {
-          console.log(
-            "MARKER TIKLANDI:",
-            location
-          );
 
-          onSelectLocation(location);
-        }
-      );
+        marker.addEventListener("gmp-click", () => {
+        onSelectLocation(location);
+      }      );
 
 
       markersRef.current.push(marker);
@@ -92,60 +91,38 @@ function GoogleMap({
    * GOOGLE MAPS BAŞLAT
    * =====================================================
    */
+
   useEffect(() => {
+
     let cancelled = false;
 
     const initMap = async () => {
+
       try {
-        const apiKey =
-          import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
         const mapId =
           import.meta.env.VITE_GOOGLE_MAPS_MAP_ID;
 
 
-        if (!apiKey) {
-          console.error(
-            "Google Maps API key bulunamadı."
-          );
-          return;
-        }
-
-
         if (!mapId) {
+
           console.error(
             "Google Maps Map ID bulunamadı."
           );
+
           return;
         }
 
 
         /*
-         * setOptions sadece bir kere.
+         * Google Maps ve Marker kütüphanelerini
+         * merkezi loader üzerinden alıyoruz.
          */
-        if (!googleMapsInitialized) {
-          setOptions({
-            key: apiKey,
-            v: "weekly",
-          });
 
-          googleMapsInitialized = true;
-        }
-
-
-        /*
-         * Maps library
-         */
-        const { Map } =
-          await importLibrary("maps");
-
-
-        /*
-         * Marker library
-         */
         const {
+          Map,
           AdvancedMarkerElement,
-        } = await importLibrary("marker");
+        } = await loadGoogleMaps();
 
 
         if (cancelled) {
@@ -159,8 +136,11 @@ function GoogleMap({
 
 
         /*
+         * =================================================
          * HARİTAYI OLUŞTUR
+         * =================================================
          */
+
         const map = new Map(
           mapRef.current,
           {
@@ -186,8 +166,11 @@ function GoogleMap({
 
 
         /*
-         * İLK MARKERLARI OLUŞTUR
+         * =================================================
+         * MARKERLARI OLUŞTUR
+         * =================================================
          */
+
         createMarkers(
           map,
           AdvancedMarkerElement
@@ -195,23 +178,34 @@ function GoogleMap({
 
 
       } catch (error) {
+
         console.error(
           "Google Maps başlatılırken hata oluştu:",
           error
         );
+
       }
+
     };
 
 
     initMap();
 
 
+    /*
+     * =====================================================
+     * CLEANUP
+     * =====================================================
+     */
+
     return () => {
+
       cancelled = true;
 
       clearMarkers();
 
       mapInstanceRef.current = null;
+
     };
 
   }, []);
@@ -219,22 +213,28 @@ function GoogleMap({
 
   /*
    * =====================================================
-   * LOCATIONS DEĞİŞTİĞİNDE MARKERLARI YENİLE
+   * LOCATIONS DEĞİŞİNCE MARKERLARI GÜNCELLE
    * =====================================================
    */
+
   useEffect(() => {
+
     const updateMarkers = async () => {
+
       const map =
         mapInstanceRef.current;
+
 
       if (!map) {
         return;
       }
 
+
       try {
+
         const {
           AdvancedMarkerElement,
-        } = await importLibrary("marker");
+        } = await loadGoogleMaps();
 
 
         createMarkers(
@@ -242,12 +242,16 @@ function GoogleMap({
           AdvancedMarkerElement
         );
 
+
       } catch (error) {
+
         console.error(
           "Markerlar güncellenirken hata oluştu:",
           error
         );
+
       }
+
     };
 
 
@@ -261,35 +265,69 @@ function GoogleMap({
    * SEÇİLEN İSTASYONA GİT
    * =====================================================
    */
+
   useEffect(() => {
-    const map =
-      mapInstanceRef.current;
+  const map = mapInstanceRef.current;
 
-    if (!map || !selectedLocation) {
-      return;
+  if (!map || !userLocation) {
+    return;
+  }
+
+  const updateUserLocation = async () => {
+    try {
+      const { AdvancedMarkerElement } = await loadGoogleMaps();
+
+      const position = {
+        lat: userLocation.latitude,
+        lng: userLocation.longitude,
+      };
+
+      // Önceki kullanıcı markerını temizle
+      if (userMarkerRef.current) {
+        userMarkerRef.current.map = null;
+      }
+
+      // Kullanıcı konumunu gösteren basit marker
+      const markerElement = document.createElement("div");
+
+      markerElement.style.width = "16px";
+      markerElement.style.height = "16px";
+      markerElement.style.backgroundColor = "#2563eb";
+      markerElement.style.border = "3px solid white";
+      markerElement.style.borderRadius = "50%";
+      markerElement.style.boxShadow =
+        "0 1px 6px rgba(0,0,0,0.3)";
+
+      userMarkerRef.current =
+        new AdvancedMarkerElement({
+          map,
+          position,
+          content: markerElement,
+          title: "Konumunuz",
+        });
+
+      // Haritayı kullanıcı konumuna götür
+      map.panTo(position);
+      map.setZoom(14);
+
+    } catch (error) {
+      console.error(
+        "Kullanıcı konumu haritada gösterilemedi:",
+        error
+      );
     }
+  };
+
+  updateUserLocation();
+
+}, [userLocation]);
 
 
-    if (
-      typeof selectedLocation.latitude !==
-        "number" ||
-      typeof selectedLocation.longitude !==
-        "number"
-    ) {
-      return;
-    }
-
-
-    map.panTo({
-      lat: selectedLocation.latitude,
-      lng: selectedLocation.longitude,
-    });
-
-
-    map.setZoom(15);
-
-  }, [selectedLocation]);
-
+  /*
+   * =====================================================
+   * GOOGLE MAP CONTAINER
+   * =====================================================
+   */
 
   return (
     <div

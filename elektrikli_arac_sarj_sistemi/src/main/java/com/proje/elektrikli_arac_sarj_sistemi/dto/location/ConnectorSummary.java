@@ -3,6 +3,7 @@ package com.proje.elektrikli_arac_sarj_sistemi.dto.location;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.util.UUID;
 
 import java.math.BigDecimal;
 
@@ -10,6 +11,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ConnectorSummary {
+    private UUID id;    
     private String connectorId;
     private String standard;        //  CCS, CHAdeMO, Type2
     private String status;          // AVAILABLE, CHARGING (EVSE üzerinden)

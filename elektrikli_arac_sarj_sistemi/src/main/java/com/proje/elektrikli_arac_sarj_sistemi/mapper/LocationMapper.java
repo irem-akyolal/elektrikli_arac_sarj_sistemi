@@ -80,12 +80,15 @@ public class LocationMapper {
 
     private ConnectorSummary toConnectorSummary(Connector connector) {
         return new ConnectorSummary(
+                connector.getId(),
                 connector.getOcpiConnectorId(),
                 connector.getStandard() != null ? connector.getStandard().name() : null,
                 connector.getEvse().getStatus() != null ? connector.getEvse().getStatus().name() : null,
                 connector.getPowerType() != null ? connector.getPowerType().name() : null,
                 connector.getMaxElectricPowerWatt(),
                 connector.getUnitPrice()
+                
+            
         );
     }
 }

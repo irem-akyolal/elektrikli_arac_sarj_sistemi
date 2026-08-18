@@ -1,54 +1,21 @@
-import axios from "axios";
+import api from "./axios";  // "axios" paketi değil, kendi instance'ımız
 
-const API_BASE_URL = "http://localhost:8080/api/public/locations";
+const BASE_PATH = "/public/locations";
 
-/**
- * Tüm aktif şarj istasyonlarını getirir.
- */
 export const getActiveLocations = () => {
-  return axios.get(`${API_BASE_URL}/active`);
+  return api.get(`${BASE_PATH}/active`);
 };
 
-/**
- * ID'ye göre istasyon detayını getirir.
- */
 export const getLocationDetail = (id) => {
-  return axios.get(`${API_BASE_URL}/${id}`);
+  return api.get(`${BASE_PATH}/${id}`);
 };
 
-/**
- * Belirli koordinatlara göre yakındaki istasyonları getirir.
- *
- * @param {number} latitude
- * @param {number} longitude
- * @param {number} radiusKm
- */
-export const getNearbyLocations = (
-  latitude,
-  longitude,
-  radiusKm = 10
-) => {
-  return axios.get(`${API_BASE_URL}/nearby`, {
-    params: {
-      latitude,
-      longitude,
-      radiusKm,
-    },
+export const getNearbyLocations = (latitude, longitude, radiusKm = 10) => {
+  return api.get(`${BASE_PATH}/nearby`, {
+    params: { latitude, longitude, radiusKm },
   });
 };
 
-/**
- * İstasyonlarda filtreli arama yapar.
- *
- * @param {object} params
- * @param {string} params.name
- * @param {string} params.city
- * @param {string} params.connectorType
- * @param {boolean} params.onlyAvailable
- * @param {number} params.page
- * @param {number} params.size
- * @param {string} params.sort
- */
 export const searchLocations = ({
   name,
   city,
@@ -58,7 +25,7 @@ export const searchLocations = ({
   size = 20,
   sort = "name,asc",
 } = {}) => {
-  return axios.get(`${API_BASE_URL}/search`, {
+  return api.get(`${BASE_PATH}/search`, {
     params: {
       ...(name && { name }),
       ...(city && { city }),

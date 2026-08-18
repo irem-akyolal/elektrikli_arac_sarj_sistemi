@@ -10,6 +10,7 @@ import com.proje.elektrikli_arac_sarj_sistemi.Repository.LocationRepository;
 import com.proje.elektrikli_arac_sarj_sistemi.ocpi.dto.OcpiConnectorDto;
 import com.proje.elektrikli_arac_sarj_sistemi.ocpi.dto.OcpiEvseDto;
 import com.proje.elektrikli_arac_sarj_sistemi.ocpi.dto.OcpiLocationDto;
+import com.proje.elektrikli_arac_sarj_sistemi.Repository.ChargingSessionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class OcpiLocationPersistenceService {
@@ -27,13 +29,17 @@ public class OcpiLocationPersistenceService {
     private final LocationRepository locationRepository;
     private final EvseRepository evseRepository;
     private final ConnectorRepository connectorRepository;
+    private final ChargingSessionRepository chargingSessionRepository;
 
     public OcpiLocationPersistenceService(LocationRepository locationRepository,
                                            EvseRepository evseRepository,
-                                           ConnectorRepository connectorRepository) {
+                                           ConnectorRepository connectorRepository,
+                                        ChargingSessionRepository chargingSessionRepository) {
         this.locationRepository = locationRepository;
         this.evseRepository = evseRepository;
         this.connectorRepository = connectorRepository;
+        this.chargingSessionRepository = chargingSessionRepository;
+       
     }
 
     // KRİTİK: Bu, sadece BU location için AYRI, BAĞIMSIZ bir transaction.
@@ -129,17 +135,64 @@ public class OcpiLocationPersistenceService {
         return locationRepository.save(location);
     }
 
-    private Evse upsertEvse(OcpiEvseDto dto, Location location) {
-        Evse evse = evseRepository.findByOcpiEvseUid(dto.getUid())
-                .orElseGet(Evse::new);
+private Evse upsertEvse(
+        OcpiEvseDto dto,
+        Location location) {
 
-        evse.setOcpiEvseUid(dto.getUid());
-        evse.setEvseId(dto.getEvseId());
-        evse.setLocation(location);
-        evse.setStatus(mapEvseStatus(dto.getStatus()));
+    Evse evse = evseRepository
+            .findByOcpiEvseUid(dto.getUid())
+            .orElseGet(Evse::new);
+
+    evse.setOcpiEvseUid(dto.getUid());
+    evse.setEvseId(dto.getEvseId());
+    evse.setLocation(location);
+
+    /*
+     * Yeni EVSE ise henüz bir ChargingSession
+     * bulunamaz.
+     *
+     * Bu durumda OCPI'den gelen status doğrudan
+     * kullanılabilir.
+     */
+    if (evse.getId() == null) {
+
+        evse.setStatus(
+                mapEvseStatus(dto.getStatus())
+        );
 
         return evseRepository.save(evse);
     }
+
+    /*
+     * Mevcut EVSE için aktif bir ChargingSession
+     * olup olmadığını kontrol ediyoruz.
+     */
+    boolean hasActiveSession =
+            chargingSessionRepository
+                    .existsByConnectorEvseIdAndStatusIn(
+                            evse.getId(),
+                            List.of(
+                                    SessionStatus.STARTED,
+                                    SessionStatus.CHARGING,
+                                    SessionStatus.COMPLETED
+                            )
+                    );
+
+    /*
+     * Aktif session varsa EVSE durumu bizim
+     * session lifecycle'ımız tarafından yönetiliyor.
+     *
+     * OCPI scheduler bu durumu ezmemeli.
+     */
+    if (!hasActiveSession) {
+
+        evse.setStatus(
+                mapEvseStatus(dto.getStatus())
+        );
+    }
+
+    return evseRepository.save(evse);
+}
 
     private void upsertConnector(OcpiConnectorDto dto, Evse evse) {
         String ocpiConnectorId = evse.getOcpiEvseUid() + "-" + dto.getId();

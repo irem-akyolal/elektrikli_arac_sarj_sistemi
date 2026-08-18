@@ -1,9 +1,9 @@
-
 import { useEffect, useState } from "react";
 
 import {
   getActiveLocations,
   getLocationDetail,
+  getNearbyLocations,
 } from "../../api/locationApi";
 
 import GoogleMap from "../../components/map/GoogleMap";
@@ -21,27 +21,89 @@ function Home() {
   const [locationDetail, setLocationDetail] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
 
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [userLocation, setUserLocation] = useState(null);
+
   // =====================================================
   // AKTİF İSTASYONLARI GETİR
   // =====================================================
 
-  useEffect(() => {
-    const fetchLocations = async () => {
-      try {
-        const response = await getActiveLocations();
+  const fetchLocations = async () => {
+    try {
+      const response = await getActiveLocations();
+      setLocations(response.data);
+    } catch (err) {
+      console.error("İstasyonlar alınamadı:", err);
+      setError("İstasyonlar yüklenirken bir hata oluştu.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        setLocations(response.data);
-      } catch (err) {
-        console.error("İstasyonlar alınamadı:", err);
 
-        setError(
-          "İstasyonlar yüklenirken bir hata oluştu."
-        );
-      } finally {
-        setLoading(false);
+  const handleUseMyLocation = () => {
+    if (!navigator.geolocation) {
+      setError("Tarayıcınız konum bilgisini desteklemiyor.");
+      return;
+    }
+
+    setLocationLoading(true);
+    setError("");
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+
+        // Kullanıcının konumunu kaydet
+        setUserLocation({
+          latitude,
+          longitude,
+        });
+
+        try {
+          const response = await getNearbyLocations(
+            latitude,
+            longitude,
+            10
+          );
+
+          setLocations(response.data);
+        } catch (err) {
+          console.error(
+            "Yakındaki istasyonlar alınamadı:",
+            err
+          );
+
+          setError(
+            "Konumunuza yakın istasyonlar alınırken bir hata oluştu."
+          );
+        } finally {
+          setLocationLoading(false);
+        }
+      },
+      (error) => {
+        console.error("Konum alınamadı:", error);
+
+        setLocationLoading(false);
+
+        if (error.code === error.PERMISSION_DENIED) {
+          setError(
+            "Konum izni verilmedi. Lütfen tarayıcıdan konum iznini açın."
+          );
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          setError("Konum bilgisi kullanılamıyor.");
+        } else if (error.code === error.TIMEOUT) {
+          setError("Konum alınırken zaman aşımı oluştu.");
+        } else {
+          setError("Konumunuz alınamadı.");
+        }
       }
-    };
+    );
+  };
 
+
+
+  useEffect(() => {
     fetchLocations();
   }, []);
 
@@ -65,20 +127,32 @@ function Home() {
 
     try {
       const response = await getLocationDetail(location.id);
-
       setLocationDetail(response.data);
     } catch (err) {
-      console.error(
-        "İstasyon detayı alınamadı:",
-        err
-      );
-
-      setError(
-        "İstasyon detayları yüklenirken bir hata oluştu."
-      );
+      console.error("İstasyon detayı alınamadı:", err);
+      setError("İstasyon detayları yüklenirken bir hata oluştu.");
     } finally {
       setDetailLoading(false);
     }
+  };
+
+  // =====================================================
+  // DETAY PANELİNİ VE LİSTEYİ TAZELE
+  // (şarj başlatma sonrası çağrılır)
+  // =====================================================
+
+  const refreshAfterChargingStart = async () => {
+    if (!selectedLocation?.id) return;
+
+    try {
+      const response = await getLocationDetail(selectedLocation.id);
+      setLocationDetail(response.data);
+    } catch (err) {
+      console.error("İstasyon detayı yenilenemedi:", err);
+    }
+
+    // Sol listedeki "müsait" sayılarını da güncelle
+    fetchLocations();
   };
 
   // =====================================================
@@ -94,31 +168,19 @@ function Home() {
   // ARAMA
   // =====================================================
 
-  const filteredLocations = locations.filter(
-    (location) => {
-      const searchText = search
-        .toLowerCase()
-        .trim();
+  const filteredLocations = locations.filter((location) => {
+    const searchText = search.toLowerCase().trim();
 
-      if (!searchText) {
-        return true;
-      }
-
-      return (
-        location.name
-          ?.toLowerCase()
-          .includes(searchText) ||
-
-        location.city
-          ?.toLowerCase()
-          .includes(searchText) ||
-
-        location.address
-          ?.toLowerCase()
-          .includes(searchText)
-      );
+    if (!searchText) {
+      return true;
     }
-  );
+
+    return (
+      location.name?.toLowerCase().includes(searchText) ||
+      location.city?.toLowerCase().includes(searchText) ||
+      location.address?.toLowerCase().includes(searchText)
+    );
+  });
 
   // =====================================================
   // LOADING
@@ -127,9 +189,7 @@ function Home() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500">
-          İstasyonlar yükleniyor...
-        </p>
+        <p className="text-gray-500">İstasyonlar yükleniyor...</p>
       </div>
     );
   }
@@ -141,9 +201,7 @@ function Home() {
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-red-500">
-          {error}
-        </p>
+        <p className="text-red-500">{error}</p>
       </div>
     );
   }
@@ -154,14 +212,12 @@ function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-
       {/* =================================================
           HEADER
       ================================================= */}
 
       <header className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-
           <div>
             <h1 className="text-xl font-bold text-gray-900">
               ⚡ EV Charge
@@ -183,21 +239,17 @@ function Home() {
           >
             Yönetici Girişi
           </a>
-
         </div>
       </header>
-
 
       {/* =================================================
           MAIN
       ================================================= */}
 
       <main className="max-w-7xl mx-auto px-6 py-8">
-
         {/* TITLE */}
 
         <div className="mb-6">
-
           <h2 className="text-3xl font-bold text-gray-900">
             Şarj İstasyonu Bul
           </h2>
@@ -205,18 +257,14 @@ function Home() {
           <p className="mt-2 text-gray-500">
             Size en uygun şarj istasyonunu bulun.
           </p>
-
         </div>
-
 
         {/* =================================================
             SEARCH + LOCATION
         ================================================= */}
 
         <div className="flex flex-col md:flex-row gap-3 mb-6">
-
           <div className="relative flex-1">
-
             <span className="absolute left-4 top-1/2 -translate-y-1/2">
               🔍
             </span>
@@ -225,9 +273,7 @@ function Home() {
               type="text"
               placeholder="İstasyon, şehir veya adres ara..."
               value={search}
-              onChange={(e) =>
-                setSearch(e.target.value)
-              }
+              onChange={(e) => setSearch(e.target.value)}
               className="
                 w-full
                 bg-white
@@ -242,36 +288,36 @@ function Home() {
                 focus:ring-blue-500
               "
             />
-
           </div>
 
-
           <button
+            onClick={handleUseMyLocation}
+            disabled={locationLoading}
             className="
-              px-5
-              py-3
-              rounded-xl
-              bg-blue-600
-              text-white
-              font-medium
-              hover:bg-blue-700
-              transition
+            px-5
+            py-3
+            rounded-xl
+            bg-blue-600
+            text-white
+            font-medium
+            hover:bg-blue-700
+            transition
+            disabled:opacity-60
+            disabled:cursor-not-allowed
             "
           >
-            📍 Konumumu Kullan
+            {locationLoading
+              ? "📍 Konum aranıyor..."
+              : "📍 Konumumu Kullan"}
           </button>
-
         </div>
-
 
         {/* =================================================
             VIEW SWITCH
         ================================================= */}
 
         <div className="flex justify-end mb-4">
-
           <div className="bg-white border rounded-lg p-1 flex">
-
             <button
               onClick={() => setView("map")}
               className={`
@@ -281,16 +327,14 @@ function Home() {
                 text-sm
                 font-medium
 
-                ${
-                  view === "map"
-                    ? "bg-gray-900 text-white"
-                    : "text-gray-600 hover:bg-gray-100"
+                ${view === "map"
+                  ? "bg-gray-900 text-white"
+                  : "text-gray-600 hover:bg-gray-100"
                 }
               `}
             >
               Harita
             </button>
-
 
             <button
               onClick={() => setView("list")}
@@ -301,29 +345,23 @@ function Home() {
                 text-sm
                 font-medium
 
-                ${
-                  view === "list"
-                    ? "bg-gray-900 text-white"
-                    : "text-gray-600 hover:bg-gray-100"
+                ${view === "list"
+                  ? "bg-gray-900 text-white"
+                  : "text-gray-600 hover:bg-gray-100"
                 }
               `}
             >
               Liste
             </button>
-
           </div>
-
         </div>
-
 
         {/* =================================================
             MAP VIEW
         ================================================= */}
 
         {view === "map" ? (
-
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-
             {/* =================================================
                 GOOGLE MAP
             ================================================= */}
@@ -339,22 +377,18 @@ function Home() {
                 bg-gray-200
               "
             >
-
               <GoogleMap
                 locations={filteredLocations}
                 selectedLocation={selectedLocation}
-                onSelectLocation={
-                  handleSelectLocation
-                }
+                onSelectLocation={handleSelectLocation}
+                userLocation={userLocation}
               />
-
 
               {/* =================================================
                   DETAIL LOADING
               ================================================= */}
 
               {detailLoading && (
-
                 <div
                   className="
                     absolute
@@ -372,28 +406,20 @@ function Home() {
                 >
                   İstasyon bilgileri yükleniyor...
                 </div>
-
               )}
-
 
               {/* =================================================
                   DETAIL PANEL
               ================================================= */}
 
-              {locationDetail &&
-                !detailLoading && (
-
-                  <LocationDetailPanel
-                    location={locationDetail}
-                    onClose={
-                      handleCloseDetail
-                    }
-                  />
-
-                )}
-
+              {locationDetail && !detailLoading && (
+                <LocationDetailPanel
+                  location={locationDetail}
+                  onClose={handleCloseDetail}
+                  onLocationRefresh={refreshAfterChargingStart}
+                />
+              )}
             </div>
-
 
             {/* =================================================
                 LOCATION LIST
@@ -409,235 +435,145 @@ function Home() {
                 overflow-y-auto
               "
             >
-
               {/* LIST HEADER */}
 
               <div className="p-5 border-b">
-
-                <h3 className="font-bold text-lg">
-                  İstasyonlar
-                </h3>
+                <h3 className="font-bold text-lg">İstasyonlar</h3>
 
                 <p className="text-sm text-gray-500 mt-1">
                   {filteredLocations.length} istasyon bulundu
                 </p>
-
               </div>
-
 
               {/* LIST */}
 
               <div>
-
                 {filteredLocations.length === 0 ? (
-
                   <div className="p-6 text-center text-gray-500">
                     İstasyon bulunamadı.
                   </div>
-
                 ) : (
+                  filteredLocations.map((location) => (
+                    <div
+                      key={location.id}
+                      onClick={() => handleSelectLocation(location)}
+                      className={`
+                        p-5
+                        border-b
+                        cursor-pointer
+                        transition
+                        hover:bg-gray-50
 
-                  filteredLocations.map(
-                    (location) => (
-
-                      <div
-                        key={location.id}
-                        onClick={() =>
-                          handleSelectLocation(
-                            location
-                          )
+                        ${selectedLocation?.id === location.id
+                          ? "bg-blue-50 border-l-4 border-l-blue-600"
+                          : ""
                         }
-                        className={`
-                          p-5
-                          border-b
-                          cursor-pointer
-                          transition
-                          hover:bg-gray-50
+                      `}
+                    >
+                      <h4 className="font-semibold text-gray-900">
+                        {location.name}
+                      </h4>
 
-                          ${
-                            selectedLocation?.id ===
-                            location.id
-                              ? "bg-blue-50 border-l-4 border-l-blue-600"
-                              : ""
-                          }
-                        `}
-                      >
+                      <p className="text-sm text-gray-500 mt-1">
+                        {location.address}
+                      </p>
 
-                        <h4 className="font-semibold text-gray-900">
-                          {location.name}
-                        </h4>
+                      <p className="text-sm text-gray-500">
+                        {location.city}
+                      </p>
 
+                      {/* AVAILABILITY */}
 
-                        <p className="text-sm text-gray-500 mt-1">
-                          {location.address}
-                        </p>
+                      {location.availability?.length > 0 && (
+                        <div className="mt-4 space-y-2">
+                          {location.availability.map((item, index) => (
+                            <div
+                              key={index}
+                              className="
+                                flex
+                                items-center
+                                justify-between
+                                gap-2
+                                text-sm
+                              "
+                            >
+                              <span className="font-medium">
+                                {item.powerType}
+                              </span>
 
+                              <span className="text-gray-500">
+                                {item.availableCount}/{item.totalCount}{" "}
+                                müsait
+                              </span>
 
-                        <p className="text-sm text-gray-500">
-                          {location.city}
-                        </p>
-
-
-                        {/* AVAILABILITY */}
-
-                        {location.availability?.length > 0 && (
-
-                          <div className="mt-4 space-y-2">
-
-                            {location.availability.map(
-                              (item, index) => (
-
-                                <div
-                                  key={index}
-                                  className="
-                                    flex
-                                    items-center
-                                    justify-between
-                                    gap-2
-                                    text-sm
-                                  "
-                                >
-
-                                  <span className="font-medium">
-                                    {item.powerType}
-                                  </span>
-
-
-                                  <span className="text-gray-500">
-                                    {item.availableCount}/
-                                    {item.totalCount}
-                                    {" "}müsait
-                                  </span>
-
-
-                                  <span className="font-medium">
-                                    {item.unitPrice}
-                                    {" "}TL/kWh
-                                  </span>
-
-                                </div>
-
-                              )
-                            )}
-
-                          </div>
-
-                        )}
-
-                      </div>
-
-                    )
-                  )
-
+                              <span className="font-medium">
+                                {item.unitPrice} TL/kWh
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))
                 )}
-
               </div>
-
             </div>
-
           </div>
-
         ) : (
-
           /* =================================================
               LIST VIEW
           ================================================= */
 
           <div className="bg-white rounded-2xl border overflow-hidden">
-
             {filteredLocations.length === 0 ? (
-
               <div className="p-8 text-center text-gray-500">
                 İstasyon bulunamadı.
               </div>
-
             ) : (
+              filteredLocations.map((location) => (
+                <div
+                  key={location.id}
+                  onClick={() => handleSelectLocation(location)}
+                  className="
+                    p-6
+                    border-b
+                    hover:bg-gray-50
+                    cursor-pointer
+                    transition
+                  "
+                >
+                  <h3 className="text-lg font-semibold">
+                    {location.name}
+                  </h3>
 
-              filteredLocations.map(
-                (location) => (
+                  <p className="text-gray-500 mt-1">
+                    {location.address}, {location.city}
+                  </p>
 
-                  <div
-                    key={location.id}
-                    onClick={() =>
-                      handleSelectLocation(
-                        location
-                      )
-                    }
-                    className="
-                      p-6
-                      border-b
-                      hover:bg-gray-50
-                      cursor-pointer
-                      transition
-                    "
-                  >
+                  {location.availability?.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      {location.availability.map((item, index) => (
+                        <div
+                          key={index}
+                          className="flex gap-6 text-sm"
+                        >
+                          <span>{item.powerType}</span>
 
-                    <h3 className="text-lg font-semibold">
-                      {location.name}
-                    </h3>
+                          <span>
+                            {item.availableCount}/{item.totalCount} müsait
+                          </span>
 
-
-                    <p className="text-gray-500 mt-1">
-                      {location.address},{" "}
-                      {location.city}
-                    </p>
-
-
-                    {location.availability?.length > 0 && (
-
-                      <div className="mt-4 space-y-2">
-
-                        {location.availability.map(
-                          (item, index) => (
-
-                            <div
-                              key={index}
-                              className="
-                                flex
-                                gap-6
-                                text-sm
-                              "
-                            >
-
-                              <span>
-                                {item.powerType}
-                              </span>
-
-
-                              <span>
-                                {item.availableCount}/
-                                {item.totalCount}
-                                {" "}müsait
-                              </span>
-
-
-                              <span>
-                                {item.unitPrice}
-                                {" "}TL/kWh
-                              </span>
-
-                            </div>
-
-                          )
-                        )}
-
-                      </div>
-
-                    )}
-
-                  </div>
-
-                )
-              )
-
+                          <span>{item.unitPrice} TL/kWh</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))
             )}
-
           </div>
-
         )}
-
       </main>
-
     </div>
   );
 }

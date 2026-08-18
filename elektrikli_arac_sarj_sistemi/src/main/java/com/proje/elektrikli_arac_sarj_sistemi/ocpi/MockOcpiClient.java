@@ -76,11 +76,28 @@ public class MockOcpiClient implements OcpiClient {
                         "28.8721"
                 );
 
+
+
+       // 5. Galataport İstanbul - Session lifecycle test istasyonu
+        OcpiLocationDto sessionTestLocation =
+                createMockLocation(
+                "MOCKLOCSESSIONTEST",
+                "Galataport İstanbul Şarj İstasyonu",
+                "Kılıçali Paşa Mahallesi, Meclis-i Mebusan Caddesi No:8",
+                "İstanbul",
+                "34433",
+                "41.0256",
+                "28.9840"
+               );
+
+
         return List.of(
                 location1,
                 location2,
                 location6,
-                testLocation
+                testLocation,
+                sessionTestLocation
+
         );
     }
 
