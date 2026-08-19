@@ -45,6 +45,8 @@ public class ChargingSessionService {
      private final PaymentProviderClient paymentProviderClient;
      private final ProvisionService provisionService;
      private final OcpiClient ocpiClient; // dışarı akışı (sistem → CPO, Remote Start/Stop) Şarj Başlat" dediğimizde, gerçekten OCPI'ye (mock'a) bir istek gidecek
+     private final java.util.Optional<com.proje.elektrikli_arac_sarj_sistemi.ocpi.MockOcpiClient> mockOcpiClient;
+     
      
     public ChargingSessionService(ChargingSessionRepository chargingSessionRepository,
                                    ConnectorRepository connectorRepository,
@@ -54,7 +56,8 @@ public class ChargingSessionService {
                                    PaymentService paymentService,
                                    ProvisionService provisionService,
                                    PaymentProviderClient paymentProviderClient,
-                                   OcpiClient ocpiClient) {
+                                   OcpiClient ocpiClient,
+                                   java.util.Optional<com.proje.elektrikli_arac_sarj_sistemi.ocpi.MockOcpiClient> mockOcpiClient) {
         this.chargingSessionRepository = chargingSessionRepository;
         this.connectorRepository = connectorRepository;
         this.evseRepository= evseRepository;
@@ -64,6 +67,11 @@ public class ChargingSessionService {
         this.ocpiClient = ocpiClient;
         this.provisionService=provisionService;
         this.paymentProviderClient = paymentProviderClient;
+        this.mockOcpiClient = mockOcpiClient;
+        
+
+        
+
 
     }
 
@@ -226,6 +234,19 @@ public ChargingSessionResponse startSession(
     evse.setStatus(EvseStatus.CHARGING);
 
     evseRepository.save(evse);
+
+
+    // =====================================================
+    // 8.5 MOCK ORTAMDA TÜKETİM İZLEMEYE AL (11. madde)
+    // =====================================================
+
+    mockOcpiClient.ifPresent(mock -> mock.registerSessionForMonitoring(
+            ocpiResult.getOcpiSessionId(),
+            request.getRequestedAmount(),
+            connector.getUnitPrice(),
+            connector.getMaxElectricPowerWatt()
+    ));
+
 
 
     // =====================================================

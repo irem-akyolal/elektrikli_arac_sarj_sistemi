@@ -22,23 +22,27 @@ public class AdminUserController {
     public AdminUserController(AdminUserService adminUserService) {
         this.adminUserService = adminUserService;
     }
-
+    
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     @PostMapping
     public ResponseEntity<AdminUserResponse> create(@Valid @RequestBody AdminUserCreateRequest request) {
         AdminUserResponse response = adminUserService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<AdminUserResponse> getById(@PathVariable UUID id) {
         return ResponseEntity.ok(adminUserService.getById(id));
     }
-
+    
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     @GetMapping
     public ResponseEntity<List<AdminUserResponse>> getAll() {
         return ResponseEntity.ok(adminUserService.getAll());
     }
-
+    
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deactivate(@PathVariable UUID id) {
         adminUserService.deactivate(id);

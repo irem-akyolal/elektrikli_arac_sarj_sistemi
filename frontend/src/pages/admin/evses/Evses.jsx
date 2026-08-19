@@ -25,14 +25,14 @@ function Evses() {
         user?.role === "SUPER_ADMIN" ||
         user?.role === "OPERATOR";
 
-    const fetchEvses = async () => {
+    const fetchEvses = async (filters = {}) => {
         try {
             setLoading(true);
             setError("");
 
             const response = await getAdminEvses({
-                status: status || undefined,
-                locationId: locationId || undefined,
+                status: filters.status ?? (status || undefined),
+                locationId: filters.locationId ?? (locationId || undefined),
                 page,
                 size: 20,
             });
@@ -58,6 +58,21 @@ function Evses() {
         // filtreyi burada doğrudan uyguluyoruz.
         if (page === 0) {
             fetchEvses();
+        }
+    };
+
+    const handleClearFilters = () => {
+        setStatus("");
+        setLocationId("");
+        setPage(0);
+
+        // page zaten 0 ise useEffect çalışmayacağı için
+        // filtreleri temizleyerek doğrudan tekrar getiriyoruz.
+        if (page === 0) {
+            fetchEvses({
+                status: undefined,
+                locationId: undefined,
+            });
         }
     };
 
@@ -107,21 +122,6 @@ function Evses() {
                         Şarj istasyonlarındaki EVSE'leri yönetin.
                     </p>
                 </div>
-
-                {canManage && (
-                    <button
-                        className="
-                            bg-blue-600
-                            text-white
-                            px-4
-                            py-2
-                            rounded-lg
-                            hover:bg-blue-700
-                        "
-                    >
-                        + EVSE Ekle
-                    </button>
-                )}
 
             </div>
 
@@ -214,6 +214,19 @@ function Evses() {
                         "
                     >
                         Filtrele
+                    </button>
+
+                    <button
+                        onClick={handleClearFilters}
+                        className="
+                            border
+                            px-5
+                            py-2
+                            rounded-lg
+                            hover:bg-gray-100
+                        "
+                    >
+                        Temizle
                     </button>
 
                 </div>

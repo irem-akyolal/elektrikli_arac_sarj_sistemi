@@ -1,11 +1,13 @@
 package com.proje.elektrikli_arac_sarj_sistemi.controller.location;
 
+import com.proje.elektrikli_arac_sarj_sistemi.dto.location.LocationAdminDetailResponse;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.location.LocationCreateRequest;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.location.LocationUpdateRequest;
 import com.proje.elektrikli_arac_sarj_sistemi.dto.location.LocationResponse;
 import com.proje.elektrikli_arac_sarj_sistemi.service.location.LocationAdminService;
 import com.proje.elektrikli_arac_sarj_sistemi.util.PageableValidator;
 import com.proje.elektrikli_arac_sarj_sistemi.util.SortFields;
+
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +38,6 @@ public class LocationAdminController {
                 .body(locationAdminService.create(request));
     }
 
-    
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR')")
     @PutMapping("/{id}")
     public ResponseEntity<LocationResponse> update(
@@ -51,7 +52,6 @@ public class LocationAdminController {
         return ResponseEntity.ok(locationAdminService.activate(id));
     }
 
-
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     @PatchMapping("/{id}/deactivate")
     public ResponseEntity<Void> deactivate(@PathVariable UUID id) {
@@ -59,33 +59,38 @@ public class LocationAdminController {
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR', 'VIEWER')")
+    @GetMapping("/{id}/detail")
+    public ResponseEntity<LocationAdminDetailResponse> getDetail(
+            @PathVariable UUID id) {
+
+        return ResponseEntity.ok(
+                locationAdminService.getDetail(id));
+    }
 
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR', 'VIEWER')")
     @GetMapping("/{id}")
     public ResponseEntity<LocationResponse> getById(@PathVariable UUID id) {
         return ResponseEntity.ok(locationAdminService.getById(id));
     }
-    
+
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR', 'VIEWER')")
     @GetMapping
     public ResponseEntity<Page<LocationResponse>> getAllWithFilters(
-        @RequestParam(required = false) String name,
-        @RequestParam(required = false) String city,
-        @RequestParam(required = false) Boolean active,
-        @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
-        Pageable pageable) {
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) Boolean active,
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
 
-       pageableValidator.validate(pageable, SortFields.ADMIN_LOCATION);
+        pageableValidator.validate(pageable, SortFields.ADMIN_LOCATION);
 
-    return ResponseEntity.ok(
-            locationAdminService.getAllWithFilters(
-                    name,
-                    city,
-                    active,
-                    pageable
-            )
-    );
-}
+        return ResponseEntity.ok(
+                locationAdminService.getAllWithFilters(
+                        name,
+                        city,
+                        active,
+                        pageable));
+    }
 
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATOR', 'VIEWER')")
     @GetMapping("/all")

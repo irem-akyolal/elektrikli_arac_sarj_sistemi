@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { startChargingSession, markSessionAsCharging } from "../../api/chargingSessionApi";
 
 import ConfirmStartModal from "./ConfirmStartModal";
@@ -11,6 +12,7 @@ function ChargingFlowModal({ connector, onClose, onSuccess }) {
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [result, setResult] = useState(null);
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     plateNumber: "",
@@ -122,7 +124,6 @@ function ChargingFlowModal({ connector, onClose, onSuccess }) {
             }}
           />
         )}
-
         {step === "success" && (
           <div className="p-6 text-center">
             <div className="text-5xl mb-4">✅</div>
@@ -133,10 +134,10 @@ function ChargingFlowModal({ connector, onClose, onSuccess }) {
               Oturum numaranız: {result?.id}
             </p>
             <button
-              onClick={onClose}
+              onClick={() => navigate(`/session/${result.id}`)}
               className="w-full py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
             >
-              Kapat
+              Oturumu Görüntüle
             </button>
           </div>
         )}

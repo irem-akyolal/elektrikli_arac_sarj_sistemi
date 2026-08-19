@@ -12,7 +12,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface ChargingSessionRepository extends JpaRepository<ChargingSession, UUID>, JpaSpecificationExecutor<ChargingSession> {
+public interface ChargingSessionRepository
+        extends JpaRepository<ChargingSession, UUID>, JpaSpecificationExecutor<ChargingSession> {
 
     Optional<ChargingSession> findByOcpiSessionId(String ocpiSessionId);
 
@@ -27,9 +28,14 @@ public interface ChargingSessionRepository extends JpaRepository<ChargingSession
     long countCompletedSince(@Param("startOfDay") LocalDateTime startOfDay);
 
     boolean existsByConnectorEvseIdAndStatusIn(
-        UUID evseId,
-        List<SessionStatus> statuses
-     );
+            UUID evseId,
+            List<SessionStatus> statuses);
 
-    
+    boolean existsByConnector_Evse_Location_IdAndStatusIn(
+            UUID locationId,
+            List<SessionStatus> statuses);
+
+    boolean existsByConnectorIdAndStatusIn(
+            UUID connectorId,
+            List<SessionStatus> statuses);
 }

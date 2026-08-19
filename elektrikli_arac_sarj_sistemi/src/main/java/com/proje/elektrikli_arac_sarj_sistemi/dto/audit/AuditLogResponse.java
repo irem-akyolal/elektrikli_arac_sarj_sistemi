@@ -12,6 +12,7 @@ public class AuditLogResponse {
     private String entityType;
     private String entityId;
     private LocalDateTime createdAt;
+    
 
     public AuditLogResponse(UUID id, String performedBy, AuditAction action,
                              String entityType, String entityId, LocalDateTime createdAt) {

@@ -26,16 +26,16 @@ export const getAdminLocationById = (id) => {
   return api.get(`${BASE_PATH}/${id}`);
 };
 
-export const createLocation = (data) => {
-  return api.post(BASE_PATH, data);
-};
-
 export const updateLocation = (id, data) => {
   return api.put(`${BASE_PATH}/${id}`, data);
 };
 
 export const activateLocation = (id) => {
   return api.patch(`${BASE_PATH}/${id}/activate`);
+};
+
+export const getAdminLocationDetail = (id) => {
+  return api.get(`${BASE_PATH}/${id}/detail`);
 };
 
 export const deactivateLocation = (id) => {

@@ -35,7 +35,7 @@ function Connectors() {
         user?.role === "OPERATOR";
 
 
-    const fetchConnectors = async () => {
+    const fetchConnectors = async (filters = {}) => {
 
         try {
 
@@ -43,9 +43,9 @@ function Connectors() {
             setError("");
 
             const response = await getAdminConnectors({
-                standard: standard || undefined,
-                powerType: powerType || undefined,
-                evseId: evseId || undefined,
+                standard: filters.standard ?? (standard || undefined),
+                powerType: filters.powerType ?? (powerType || undefined),
+                evseId: filters.evseId ?? (evseId || undefined),
                 page,
                 size: 20,
                 sort: "createdAt,desc",
@@ -88,6 +88,25 @@ function Connectors() {
         // Bu yüzden doğrudan tekrar çağırıyoruz.
         if (page === 0) {
             fetchConnectors();
+        }
+    };
+
+
+    const handleClearFilters = () => {
+
+        setStandard("");
+        setPowerType("");
+        setEvseId("");
+        setPage(0);
+
+        // page zaten 0 ise useEffect çalışmayacağı için
+        // filtreleri temizleyerek doğrudan tekrar getiriyoruz.
+        if (page === 0) {
+            fetchConnectors({
+                standard: undefined,
+                powerType: undefined,
+                evseId: undefined,
+            });
         }
     };
 
@@ -194,24 +213,6 @@ function Connectors() {
                     </p>
 
                 </div>
-
-
-                {canManage && (
-
-                    <button
-                        className="
-                            bg-blue-600
-                            text-white
-                            px-4
-                            py-2
-                            rounded-lg
-                            hover:bg-blue-700
-                        "
-                    >
-                        + Connector Ekle
-                    </button>
-
-                )}
 
             </div>
 
@@ -334,6 +335,19 @@ function Connectors() {
                         "
                     >
                         Filtrele
+                    </button>
+
+                    <button
+                        onClick={handleClearFilters}
+                        className="
+                            border
+                            px-5
+                            py-2
+                            rounded-lg
+                            hover:bg-gray-100
+                        "
+                    >
+                        Temizle
                     </button>
 
                 </div>

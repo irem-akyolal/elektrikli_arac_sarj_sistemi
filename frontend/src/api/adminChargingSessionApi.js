@@ -26,19 +26,3 @@ export const getAdminChargingSessions = ({
         },
     });
 };
-
-export const startChargingSession = (payload) => {
-  return api.post(`${BASE_PATH}/start`, payload);
-};
-
-export const markSessionAsCharging = (sessionId) => {
-  return api.patch(`${BASE_PATH}/${sessionId}/charging`);
-};
-
-export const markConnectorRemoved = (sessionId) => {
-  return api.patch(`${BASE_PATH}/${sessionId}/connector-removed`);
-};
-
-export const getChargingSession = (sessionId) => {
-  return api.get(`${BASE_PATH}/${sessionId}`);
-};

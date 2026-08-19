@@ -9,6 +9,15 @@ import RoleProtectedRoute from "./RoleProtectedRoute";
 import LocationsPage from "../pages/admin/locations/LocationsPage";
 import Evses from "../pages/admin/evses/Evses";
 import Connectors from "../pages/admin/connectors/Connectors";
+import Sessions from "../pages/admin/sessions/Sessions";
+import Payments from "../pages/admin/payments/Payments";
+import Provisions from "../pages/admin/provisions/Provisions";
+import EmailQueue from "../pages/admin/emailQueue/EmailQueue";
+import Users from "../pages/admin/users/Users";
+import AuditLogs from "../pages/admin/auditLogs/AuditLogs";
+import LocationDetail from "../pages/admin/locations/LocationDetail";
+import LocationEdit from "../pages/admin/locations/LocationEdit";
+import SessionTracking from "../pages/public/SessionTracking";
 
 
 import AdminLayout from "../components/admin/AdminLayout";
@@ -23,6 +32,8 @@ function AppRouter() {
         <Route path="/" element={<Home />} />
 
         <Route path="/login" element={<Login />} />
+
+        <Route path="/session/:sessionId" element={<SessionTracking />} />
 
 
         {/* ADMIN */}
@@ -40,6 +51,16 @@ function AppRouter() {
               path="locations"
               element={<LocationsPage />}
             />
+            
+            <Route
+              path="locations/:id"
+              element={<LocationDetail />}
+            />
+
+            <Route
+              path="locations/:id/edit"
+              element={<LocationEdit />}
+            />
 
 
             {/* EVSE */}
@@ -55,40 +76,24 @@ function AppRouter() {
             />
 
 
-            {/* Sessions */}
             <Route
               path="sessions"
-              element={
-                <div>
-                  Charging Sessions
-                </div>
-              }
+              element={<Sessions />}
             />
 
 
-            {/* Payments */}
             <Route
               path="payments"
-              element={
-                <div>
-                  Payments
-                </div>
-              }
+              element={<Payments />}
             />
 
 
-            {/* Provisions */}
             <Route
               path="provisions"
-              element={
-                <div>
-                  Provisions
-                </div>
-              }
+              element={<Provisions />}
             />
 
 
-            {/* Email Queue */}
             <Route element={
               <RoleProtectedRoute
                 allowedRoles={["SUPER_ADMIN", "OPERATOR"]}
@@ -96,11 +101,7 @@ function AppRouter() {
             }>
               <Route
                 path="email-queue"
-                element={
-                  <div>
-                    Email History
-                  </div>
-                }
+                element={<EmailQueue />}
               />
             </Route>
 
@@ -113,11 +114,20 @@ function AppRouter() {
             }>
               <Route
                 path="users"
-                element={
-                  <div>
-                    Admin Users
-                  </div>
-                }
+                element={<Users />}
+              />
+            </Route>
+
+
+            {/* Audit Logs */}
+            <Route element={
+              <RoleProtectedRoute
+                allowedRoles={["SUPER_ADMIN", "OPERATOR", "VIEWER"]}
+              />
+            }>
+              <Route
+                path="audit-logs"
+                element={<AuditLogs />}
               />
             </Route>
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import {
   getAdminLocations,
@@ -8,6 +9,7 @@ import {
 
 function LocationsPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,8 +27,8 @@ function LocationsPage() {
       setError("");
 
       const response = await getAdminLocations({
-        name,
-        city,
+        name: name || undefined,
+        city: city || undefined,
         active: active === "" ? undefined : active === "true",
         page,
         size: 20,
@@ -48,8 +50,40 @@ function LocationsPage() {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    setPage(0);
-    fetchLocations();
+
+    if (page === 0) {
+      fetchLocations();
+    } else {
+      setPage(0);
+    }
+  };
+
+  const handleClearFilters = async () => {
+    setName("");
+    setCity("");
+    setActive("");
+
+    if (page === 0) {
+      try {
+        setLoading(true);
+        setError("");
+
+        const response = await getAdminLocations({
+          page: 0,
+          size: 20,
+          sort: "createdAt,desc",
+        });
+
+        setLocations(response.data);
+      } catch (err) {
+        console.error("İstasyonlar alınamadı:", err);
+        setError("İstasyonlar yüklenirken bir hata oluştu.");
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      setPage(0);
+    }
   };
 
   const handleActivate = async (id) => {
@@ -68,7 +102,12 @@ function LocationsPage() {
       await fetchLocations();
     } catch (err) {
       console.error("İstasyon pasifleştirilemedi:", err);
-      alert("İstasyon pasifleştirilemedi.");
+
+      const message =
+        err.response?.data?.message ||
+        "İstasyon pasifleştirilemedi.";
+
+      alert(message);
     }
   };
 
@@ -123,21 +162,6 @@ function LocationsPage() {
             Şarj istasyonlarını görüntüleyin ve yönetin.
           </p>
         </div>
-
-        {canEdit && (
-          <button
-            className="
-              px-4
-              py-2
-              bg-blue-600
-              text-white
-              rounded-lg
-              hover:bg-blue-700
-            "
-          >
-            + Yeni İstasyon
-          </button>
-        )}
 
       </div>
 
@@ -222,6 +246,20 @@ function LocationsPage() {
           "
         >
           Filtrele
+        </button>
+
+        <button
+          type="button"
+          onClick={handleClearFilters}
+          className="
+            px-5
+            py-2
+            border
+            rounded-lg
+            hover:bg-gray-100
+          "
+        >
+          Temizle
         </button>
 
       </form>
@@ -316,6 +354,10 @@ function LocationsPage() {
                     <div className="flex justify-end gap-2">
 
                       <button
+                        type="button"
+                        onClick={() =>
+                          navigate(`/admin/locations/${location.id}`)
+                        }
                         className="
                           px-3
                           py-1.5
@@ -328,8 +370,13 @@ function LocationsPage() {
                         Detay
                       </button>
 
+
                       {canEdit && (
                         <button
+                          type="button"
+                          onClick={() =>
+                            navigate(`/admin/locations/${location.id}/edit`)
+                          }
                           className="
                             px-3
                             py-1.5
@@ -343,9 +390,11 @@ function LocationsPage() {
                         </button>
                       )}
 
+
                       {canChangeStatus &&
                         location.active && (
                           <button
+                            type="button"
                             onClick={() =>
                               handleDeactivate(location.id)
                             }
@@ -363,9 +412,11 @@ function LocationsPage() {
                           </button>
                         )}
 
+
                       {canChangeStatus &&
                         !location.active && (
                           <button
+                            type="button"
                             onClick={() =>
                               handleActivate(location.id)
                             }

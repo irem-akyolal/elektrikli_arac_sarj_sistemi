@@ -32,18 +32,19 @@ public class OcpiLocationPersistenceService {
     private final ChargingSessionRepository chargingSessionRepository;
 
     public OcpiLocationPersistenceService(LocationRepository locationRepository,
-                                           EvseRepository evseRepository,
-                                           ConnectorRepository connectorRepository,
-                                        ChargingSessionRepository chargingSessionRepository) {
+            EvseRepository evseRepository,
+            ConnectorRepository connectorRepository,
+            ChargingSessionRepository chargingSessionRepository) {
         this.locationRepository = locationRepository;
         this.evseRepository = evseRepository;
         this.connectorRepository = connectorRepository;
         this.chargingSessionRepository = chargingSessionRepository;
-       
+
     }
 
     // KRİTİK: Bu, sadece BU location için AYRI, BAĞIMSIZ bir transaction.
-    // Burada bir hata olursa, sadece bu location'ın işlemi rollback olur — diğerleri etkilenmez.
+    // Burada bir hata olursa, sadece bu location'ın işlemi rollback olur —
+    // diğerleri etkilenmez.
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void syncSingleLocation(OcpiLocationDto dto) {
         if (dto.getId() == null || dto.getId().isBlank()) {
@@ -57,9 +58,8 @@ public class OcpiLocationPersistenceService {
         }
 
         log.info(
-        "Location başarıyla senkronize edildi - OCPI ID: {}",
-        dto.getId()
-       );
+                "Location başarıyla senkronize edildi - OCPI ID: {}",
+                dto.getId());
 
         for (OcpiEvseDto ocpiEvse : dto.getEvses()) {
             if (ocpiEvse.getUid() == null || ocpiEvse.getUid().isBlank()) {
@@ -80,47 +80,57 @@ public class OcpiLocationPersistenceService {
             }
         }
 
-            log.info(
-            "Location başarıyla senkronize edildi - OCPI ID: {}",
-            dto.getId()
-            );
+        log.info(
+                "Location başarıyla senkronize edildi - OCPI ID: {}",
+                dto.getId());
     }
 
-    // Deactivation da kendi bağımsız transaction'ında — bir location'ın deactivate'i patlarsa diğerleri etkilenmesin
+    // Deactivation da kendi bağımsız transaction'ında — bir location'ın
+    // deactivate'i patlarsa diğerleri etkilenmesin
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void deactivateLocation(Location location) {
 
-       log.info(
-            "Location pasif hale getiriliyor - OCPI ID: {}",
-            location.getOcpiLocationId()
-       );
+        Location managedLocation = locationRepository
+                .findById(location.getId())
+                .orElseThrow(() -> new IllegalStateException(
+                        "Location bulunamadı: " + location.getId()));
 
-        location.setActive(false);
-        location.setDeletedAt(LocalDateTime.now());
-        locationRepository.save(location);
+        log.info(
+                "Location pasif hale getiriliyor - OCPI ID: {}",
+                managedLocation.getOcpiLocationId());
 
-        for (Evse evse : location.getEvses()) {
+        managedLocation.setActive(false);
+        managedLocation.setDeletedAt(LocalDateTime.now());
+
+        locationRepository.save(managedLocation);
+
+        for (Evse evse : managedLocation.getEvses()) {
+
             evse.setDeletedAt(LocalDateTime.now());
             evseRepository.save(evse);
 
             for (Connector connector : evse.getConnectors()) {
+
                 connector.setDeletedAt(LocalDateTime.now());
                 connectorRepository.save(connector);
             }
         }
-           log.info(
-            "Location pasifleştirildi - OCPI ID: {}",
-            location.getOcpiLocationId()
-           );
-    }
 
+        log.info(
+                "Location pasifleştirildi - OCPI ID: {}",
+                managedLocation.getOcpiLocationId());
+    }
     // ============================
     // Upsert — değişmedi, aynı mantık
     // ============================
 
     private Location upsertLocation(OcpiLocationDto dto) {
-        Location location = locationRepository.findByOcpiLocationId(dto.getId())
+
+        Location location = locationRepository
+                .findByOcpiLocationId(dto.getId())
                 .orElseGet(Location::new);
+
+        boolean isNew = location.getId() == null;
 
         location.setOcpiLocationId(dto.getId());
         location.setName(dto.getName());
@@ -128,71 +138,78 @@ public class OcpiLocationPersistenceService {
         location.setCity(dto.getCity());
         location.setPostalCode(dto.getPostalCode());
         location.setCountry(dto.getCountry());
-        location.setLatitude(Double.parseDouble(dto.getCoordinates().getLatitude()));
-        location.setLongitude(Double.parseDouble(dto.getCoordinates().getLongitude()));
-        location.setActive(true);
+        location.setLatitude(
+                Double.parseDouble(dto.getCoordinates().getLatitude()));
+        location.setLongitude(
+                Double.parseDouble(dto.getCoordinates().getLongitude()));
+
+        /*
+         * Location CPO'dan ilk kez geliyorsa aktif olarak oluşturulur.
+         *
+         * Mevcut location'ın active değeri değiştirilmez.
+         * Böylece admin tarafından pasifleştirilen location,
+         * scheduler tekrar çalıştığında otomatik olarak aktifleşmez.
+         */
+        if (isNew) {
+            location.setActive(true);
+        }
 
         return locationRepository.save(location);
     }
 
-private Evse upsertEvse(
-        OcpiEvseDto dto,
-        Location location) {
+    private Evse upsertEvse(
+            OcpiEvseDto dto,
+            Location location) {
 
-    Evse evse = evseRepository
-            .findByOcpiEvseUid(dto.getUid())
-            .orElseGet(Evse::new);
+        Evse evse = evseRepository
+                .findByOcpiEvseUid(dto.getUid())
+                .orElseGet(Evse::new);
 
-    evse.setOcpiEvseUid(dto.getUid());
-    evse.setEvseId(dto.getEvseId());
-    evse.setLocation(location);
+        evse.setOcpiEvseUid(dto.getUid());
+        evse.setEvseId(dto.getEvseId());
+        evse.setLocation(location);
 
-    /*
-     * Yeni EVSE ise henüz bir ChargingSession
-     * bulunamaz.
-     *
-     * Bu durumda OCPI'den gelen status doğrudan
-     * kullanılabilir.
-     */
-    if (evse.getId() == null) {
+        /*
+         * Yeni EVSE ise henüz bir ChargingSession
+         * bulunamaz.
+         *
+         * Bu durumda OCPI'den gelen status doğrudan
+         * kullanılabilir.
+         */
+        if (evse.getId() == null) {
 
-        evse.setStatus(
-                mapEvseStatus(dto.getStatus())
-        );
+            evse.setStatus(
+                    mapEvseStatus(dto.getStatus()));
+
+            return evseRepository.save(evse);
+        }
+
+        /*
+         * Mevcut EVSE için aktif bir ChargingSession
+         * olup olmadığını kontrol ediyoruz.
+         */
+        boolean hasActiveSession = chargingSessionRepository
+                .existsByConnectorEvseIdAndStatusIn(
+                        evse.getId(),
+                        List.of(
+                                SessionStatus.STARTED,
+                                SessionStatus.CHARGING,
+                                SessionStatus.COMPLETED));
+
+        /*
+         * Aktif session varsa EVSE durumu bizim
+         * session lifecycle'ımız tarafından yönetiliyor.
+         *
+         * OCPI scheduler bu durumu ezmemeli.
+         */
+        if (!hasActiveSession) {
+
+            evse.setStatus(
+                    mapEvseStatus(dto.getStatus()));
+        }
 
         return evseRepository.save(evse);
     }
-
-    /*
-     * Mevcut EVSE için aktif bir ChargingSession
-     * olup olmadığını kontrol ediyoruz.
-     */
-    boolean hasActiveSession =
-            chargingSessionRepository
-                    .existsByConnectorEvseIdAndStatusIn(
-                            evse.getId(),
-                            List.of(
-                                    SessionStatus.STARTED,
-                                    SessionStatus.CHARGING,
-                                    SessionStatus.COMPLETED
-                            )
-                    );
-
-    /*
-     * Aktif session varsa EVSE durumu bizim
-     * session lifecycle'ımız tarafından yönetiliyor.
-     *
-     * OCPI scheduler bu durumu ezmemeli.
-     */
-    if (!hasActiveSession) {
-
-        evse.setStatus(
-                mapEvseStatus(dto.getStatus())
-        );
-    }
-
-    return evseRepository.save(evse);
-}
 
     private void upsertConnector(OcpiConnectorDto dto, Evse evse) {
         String ocpiConnectorId = evse.getOcpiEvseUid() + "-" + dto.getId();
@@ -220,7 +237,8 @@ private Evse upsertEvse(
     // ============================
 
     private EvseStatus mapEvseStatus(String ocpiStatus) {
-        if (ocpiStatus == null) return EvseStatus.UNKNOWN;
+        if (ocpiStatus == null)
+            return EvseStatus.UNKNOWN;
         return switch (ocpiStatus) {
             case "AVAILABLE" -> EvseStatus.AVAILABLE;
             case "BLOCKED" -> EvseStatus.BLOCKED;
@@ -235,46 +253,46 @@ private Evse upsertEvse(
     }
 
     private ConnectorStandard mapConnectorStandard(String ocpiStandard) {
-        if (ocpiStandard == null) return ConnectorStandard.UNKNOWN;
+        if (ocpiStandard == null)
+            return ConnectorStandard.UNKNOWN;
         try {
             return ConnectorStandard.valueOf(ocpiStandard.toUpperCase());
         } catch (IllegalArgumentException ex) {
 
             log.warn(
-                "Bilinmeyen OCPI connector standard değeri: {}",
-                ocpiStandard
-            );
+                    "Bilinmeyen OCPI connector standard değeri: {}",
+                    ocpiStandard);
 
             return ConnectorStandard.UNKNOWN;
         }
     }
 
     private ConnectorFormat mapConnectorFormat(String ocpiFormat) {
-        if (ocpiFormat == null) return ConnectorFormat.UNKNOWN;
+        if (ocpiFormat == null)
+            return ConnectorFormat.UNKNOWN;
         try {
             return ConnectorFormat.valueOf(ocpiFormat.toUpperCase());
         } catch (IllegalArgumentException ex) {
 
-             log.warn(
-                "Bilinmeyen OCPI connector format değeri: {}",
-                ocpiFormat
-             );
+            log.warn(
+                    "Bilinmeyen OCPI connector format değeri: {}",
+                    ocpiFormat);
 
             return ConnectorFormat.UNKNOWN;
         }
     }
 
     private PowerType mapPowerType(String ocpiPowerType) {
-        if (ocpiPowerType == null) return PowerType.UNKNOWN;
+        if (ocpiPowerType == null)
+            return PowerType.UNKNOWN;
         try {
             return PowerType.valueOf(ocpiPowerType.toUpperCase());
         } catch (IllegalArgumentException ex) {
 
-              log.warn(
-                "Bilinmeyen OCPI power type değeri: {}",
-                ocpiPowerType
-              );
-              
+            log.warn(
+                    "Bilinmeyen OCPI power type değeri: {}",
+                    ocpiPowerType);
+
             return PowerType.UNKNOWN;
         }
     }

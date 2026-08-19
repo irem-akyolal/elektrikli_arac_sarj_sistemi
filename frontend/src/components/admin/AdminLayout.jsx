@@ -10,10 +10,10 @@ function AdminLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex">
+    <div className="h-screen bg-gray-100 flex overflow-hidden">
 
       {/* SIDEBAR */}
-      <aside className="w-64 bg-gray-900 text-white min-h-screen">
+      <aside className="w-64 bg-gray-900 text-white h-screen flex-shrink-0 flex flex-col">
 
         <div className="p-6 border-b border-gray-700">
           <h1 className="text-xl font-bold">
@@ -37,97 +37,116 @@ function AdminLayout() {
         </div>
 
         {/* MENU */}
-        <nav className="p-4 space-y-1">
+        <nav className="p-4 space-y-1 flex-1">
 
           <Link
             to="/admin"
-            className={`block px-4 py-3 rounded-lg ${
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg ${
               isActive("/admin")
                 ? "bg-blue-600"
                 : "hover:bg-gray-800"
             }`}
           >
-            Dashboard
+            📊
+            <span>Dashboard</span>
           </Link>
 
           <Link
             to="/admin/locations"
-            className="block px-4 py-3 rounded-lg hover:bg-gray-800"
+            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-800"
           >
-            İstasyonlar
+            📍
+            <span>İstasyonlar</span>
           </Link>
 
           <Link
             to="/admin/evses"
-            className="block px-4 py-3 rounded-lg hover:bg-gray-800"
+            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-800"
           >
-            EVSE
+            ⚡
+            <span>EVSE</span>
           </Link>
 
           <Link
             to="/admin/connectors"
-            className="block px-4 py-3 rounded-lg hover:bg-gray-800"
+            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-800"
           >
-            Connector
+            🔌
+            <span>Connector</span>
           </Link>
 
           <Link
             to="/admin/sessions"
-            className="block px-4 py-3 rounded-lg hover:bg-gray-800"
+            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-800"
           >
-            Şarj Oturumları
+            🔋
+            <span>Şarj Oturumları</span>
           </Link>
 
           <Link
             to="/admin/payments"
-            className="block px-4 py-3 rounded-lg hover:bg-gray-800"
+            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-800"
           >
-            Ödemeler
+            💳
+            <span>Ödemeler</span>
           </Link>
 
           <Link
             to="/admin/provisions"
-            className="block px-4 py-3 rounded-lg hover:bg-gray-800"
+            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-800"
           >
-            Provizyonlar
+            🛡️
+            <span>Provizyonlar</span>
           </Link>
 
           {(user?.role === "SUPER_ADMIN" ||
             user?.role === "OPERATOR") && (
             <Link
               to="/admin/email-queue"
-              className="block px-4 py-3 rounded-lg hover:bg-gray-800"
+              className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-800"
             >
-              Email Geçmişi
+              📧
+              <span>Email Geçmişi</span>
             </Link>
           )}
 
           {/* SADECE SUPER ADMIN */}
           {user?.role === "SUPER_ADMIN" && (
-            <Link
-              to="/admin/users"
-              className="block px-4 py-3 rounded-lg hover:bg-gray-800"
-            >
-              Kullanıcı Yönetimi
-            </Link>
+            <>
+              <Link
+                to="/admin/users"
+                className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-800"
+              >
+                👥
+                <span>Kullanıcı Yönetimi</span>
+              </Link>
+
+              <Link
+                to="/admin/audit-logs"
+                className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-800"
+              >
+                📋
+                <span>Sistem Logları</span>
+              </Link>
+            </>
           )}
 
         </nav>
 
         {/* LOGOUT */}
-        <div className="absolute bottom-0 w-64 p-4">
+        <div className="p-4 border-t border-gray-700 flex-shrink-0">
           <button
             onClick={logout}
             className="w-full px-4 py-3 rounded-lg bg-red-600 hover:bg-red-700"
           >
-            Çıkış Yap
+            🚪 Çıkış Yap
           </button>
         </div>
 
       </aside>
 
       {/* CONTENT */}
-      <main className="flex-1 p-8">
+      <main className="flex-1 min-w-0 h-screen overflow-y-auto p-8">
         <Outlet />
       </main>
 
