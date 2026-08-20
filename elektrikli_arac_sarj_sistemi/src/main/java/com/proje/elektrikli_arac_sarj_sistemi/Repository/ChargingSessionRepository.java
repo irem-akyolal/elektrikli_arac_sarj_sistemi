@@ -24,8 +24,9 @@ public interface ChargingSessionRepository
 
     long countByStatus(SessionStatus status);
 
-    @Query("SELECT COUNT(cs) FROM ChargingSession cs WHERE cs.status = 'COMPLETED' AND cs.completedAt >= :startOfDay")
-    long countCompletedSince(@Param("startOfDay") LocalDateTime startOfDay);
+    @Query("SELECT COUNT(cs) FROM ChargingSession cs " +
+    "WHERE cs.status IN ('COMPLETED', 'CLOSED') AND cs.completedAt >= :startOfDay")
+     long countCompletedSince(@Param("startOfDay") LocalDateTime startOfDay);
 
     boolean existsByConnectorEvseIdAndStatusIn(
             UUID evseId,

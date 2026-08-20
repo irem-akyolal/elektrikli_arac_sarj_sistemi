@@ -28,4 +28,18 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID>, JpaSpec
 
      @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p WHERE p.status = 'CAPTURED'")
      BigDecimal sumTotalRevenue();
+
+     @Query("""
+    SELECT COALESCE(SUM(p.amount), 0)
+    FROM Payment p
+    WHERE p.status IN ('CAPTURED', 'PARTIALLY_REFUNDED')
+    AND p.createdAt >= :startOfDay""")
+    BigDecimal sumTodayRevenue(@Param("startOfDay") LocalDateTime startOfDay);
+
+    @Query("""
+    SELECT COALESCE(SUM(p.amount), 0)
+    FROM Payment p
+    WHERE p.status IN ('CAPTURED', 'PARTIALLY_REFUNDED')
+    """)
+    BigDecimal sumAllRevenue();  
 }

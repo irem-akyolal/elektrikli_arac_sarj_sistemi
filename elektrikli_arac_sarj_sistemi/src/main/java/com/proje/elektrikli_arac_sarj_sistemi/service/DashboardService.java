@@ -51,8 +51,8 @@ public class DashboardService {
         long unknownPowerTypeCount = connectorRepository.countByPowerType(PowerType.UNKNOWN);
         long unknownConnectorDataCount = unknownStandardCount + unknownFormatCount + unknownPowerTypeCount;
 
-        var todayRevenue = paymentRepository.sumRevenueSince(startOfDay);
-        var totalRevenue = paymentRepository.sumTotalRevenue();
+        var todayRevenue = paymentRepository.sumTodayRevenue(startOfDay);
+        var totalRevenue = paymentRepository.sumAllRevenue();
 
         return new DashboardSummaryResponse(
                 totalLocations, activeLocations,

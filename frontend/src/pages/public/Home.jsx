@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 
 import {
@@ -104,9 +103,45 @@ function Home() {
     );
   };
 
+  // =====================================================
+  // TÜM İSTASYONLARA GERİ DÖN
+  // =====================================================
+
+  const handleShowAllLocations = async () => {
+    setUserLocation(null);
+    setSelectedLocation(null);
+    setLocationDetail(null);
+    setSearch("");
+
+    setLoading(true);
+
+    await fetchLocations();
+  };
+
   useEffect(() => {
     fetchLocations();
   }, []);
+
+  // =====================================================
+  // APPLE MAPS YOL TARİFİ
+  // =====================================================
+
+  const handleAppleMapsDirections = (location) => {
+    if (!location?.latitude || !location?.longitude) {
+      return;
+    }
+
+    const latitude = location.latitude;
+    const longitude = location.longitude;
+
+    const appleMapsUrl = `https://maps.apple.com/?daddr=${latitude},${longitude}`;
+
+    window.open(
+      appleMapsUrl,
+      "_blank",
+      "noopener,noreferrer"
+    );
+  };
 
   // =====================================================
   // İSTASYON SEÇ
@@ -765,6 +800,31 @@ function Home() {
               : "📍 Konumumu Kullan"}
           </button>
 
+
+          {/* KONUM SONRASI TÜM İSTASYONLARI GÖSTER */}
+
+          {userLocation && (
+            <button
+              onClick={handleShowAllLocations}
+              className="
+                px-5
+                py-3
+                rounded-xl
+                bg-white
+                border
+                border-gray-200
+                text-gray-700
+                font-medium
+                hover:bg-gray-50
+                hover:border-gray-300
+                transition
+                shadow-sm
+              "
+            >
+              🔄 Tüm İstasyonları Göster
+            </button>
+          )}
+
         </div>
 
 
@@ -873,6 +933,42 @@ function Home() {
                   İstasyon bilgileri yükleniyor...
                 </div>
               )}
+
+
+              {/* APPLE MAPS */}
+
+              {selectedLocation?.latitude &&
+                selectedLocation?.longitude && (
+                  <button
+                    onClick={() =>
+                      handleAppleMapsDirections(selectedLocation)
+                    }
+                    className="
+                      absolute
+                      bottom-4
+                      right-4
+                      z-20
+                      bg-white
+                      border
+                      border-gray-200
+                      rounded-xl
+                      shadow-lg
+                      px-4
+                      py-3
+                      text-sm
+                      font-medium
+                      text-gray-700
+                      hover:bg-gray-50
+                      hover:border-gray-300
+                      transition
+                      flex
+                      items-center
+                      gap-2
+                    "
+                  >
+                    🧭 Apple Maps ile Yol Tarifi
+                  </button>
+                )}
 
 
               {/* DETAIL PANEL */}
@@ -1242,7 +1338,7 @@ function Home() {
             BOTTOM INFORMATION
         ================================================= */}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-8">
+        <div className="mt-8">
 
           {/* LOCATION CTA */}
 
@@ -1320,69 +1416,6 @@ function Home() {
                 bg-white/10
               "
             />
-
-          </div>
-
-
-          {/* ADMIN CTA */}
-
-          <div
-            className="
-              rounded-2xl
-              bg-white
-              border
-              border-gray-200
-              p-6
-              shadow-sm
-            "
-          >
-
-            <div
-              className="
-                w-10
-                h-10
-                rounded-xl
-                bg-gray-100
-                flex
-                items-center
-                justify-center
-                text-xl
-                mb-4
-              "
-            >
-              ⚙️
-            </div>
-
-            <h3 className="text-xl font-bold text-gray-900">
-              Yönetici misiniz?
-            </h3>
-
-            <p className="text-sm text-gray-500 mt-2 max-w-md">
-              İstasyonları, EVSE'leri ve connector bilgilerini
-              yönetmek için yönetici paneline giriş yapabilirsiniz.
-            </p>
-
-            <a
-              href="/login"
-              className="
-                inline-flex
-                items-center
-                gap-2
-                mt-5
-                px-4
-                py-2.5
-                rounded-xl
-                bg-gray-900
-                text-white
-                text-sm
-                font-semibold
-                hover:bg-gray-800
-                transition
-              "
-            >
-              Yönetici Paneline Git
-              <span>→</span>
-            </a>
 
           </div>
 
@@ -1472,4 +1505,3 @@ function Home() {
 }
 
 export default Home;
-

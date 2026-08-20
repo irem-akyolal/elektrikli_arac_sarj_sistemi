@@ -46,20 +46,36 @@ function LocationDetailPanel({ location, onClose, onLocationRefresh }) {
     }
   };
 
-  const openDirections = () => {
-    if (
-      typeof location.latitude !== "number" ||
-      typeof location.longitude !== "number"
-    ) {
-      return;
-    }
+const openDirections = () => {
+  if (
+    typeof location.latitude !== "number" ||
+    typeof location.longitude !== "number"
+  ) {
+    return;
+  }
 
-    const url =
+  const latitude = location.latitude;
+  const longitude = location.longitude;
+
+  const userAgent = navigator.userAgent || navigator.vendor || "";
+
+  const isAppleDevice =
+    /iPad|iPhone|iPod|Macintosh/.test(userAgent) &&
+    !window.MSStream;
+
+  if (isAppleDevice) {
+    const appleMapsUrl =
+      `https://maps.apple.com/?daddr=${latitude},${longitude}`;
+
+    window.open(appleMapsUrl, "_blank");
+  } else {
+    const googleMapsUrl =
       `https://www.google.com/maps/dir/?api=1` +
-      `&destination=${location.latitude},${location.longitude}`;
+      `&destination=${latitude},${longitude}`;
 
-    window.open(url, "_blank");
-  };
+    window.open(googleMapsUrl, "_blank");
+  }
+};
 
   return (
     <div
