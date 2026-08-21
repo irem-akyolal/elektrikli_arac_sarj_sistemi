@@ -204,14 +204,6 @@ public ChargingSessionResponse startSession(
 }
 
 
-    /*
-         * Burada PRE-AUTH başarılı olmuş fakat
-         * OCPI Remote Start başarısız olmuş olabilir.
-         *
-         * Bu durumda ileride authorization release/
-         * cancellation mekanizması eklenmesi gerekir.
-         */
-
 
     // =====================================================
     // 7. OCPI SESSION ID'Yİ KAYDET

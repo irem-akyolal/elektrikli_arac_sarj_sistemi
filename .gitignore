@@ -47,3 +47,6 @@ src/main/resources/application-prod.properties
 # ============================
 .docker/
 docker-compose.override.yml
+
+
+uploads/invoices/*.pdf

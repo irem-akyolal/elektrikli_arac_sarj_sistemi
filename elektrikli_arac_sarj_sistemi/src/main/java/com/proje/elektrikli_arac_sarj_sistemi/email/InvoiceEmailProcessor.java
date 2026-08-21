@@ -17,7 +17,7 @@ public class InvoiceEmailProcessor {
         this.emailService = emailService;
     }
 
-    // Retry mantığı artık burada değil, EmailQueueProcessor'da (dakikalar arayla, daha mantıklı)
+    // Retry mantığı artık burada değil, EmailQueueProcessor'da
     public void sendInvoice(UUID invoiceId) {
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new IllegalStateException(

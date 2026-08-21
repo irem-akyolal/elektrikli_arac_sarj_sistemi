@@ -42,7 +42,7 @@ public class OcpiLocationPersistenceService {
 
     }
 
-    // KRİTİK: Bu, sadece BU location için AYRI, BAĞIMSIZ bir transaction.
+    //  Bu, sadece BU location için AYRI, BAĞIMSIZ bir transaction.
     // Burada bir hata olursa, sadece bu location'ın işlemi rollback olur —
     // diğerleri etkilenmez.
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -121,7 +121,7 @@ public class OcpiLocationPersistenceService {
                 managedLocation.getOcpiLocationId());
     }
     // ============================
-    // Upsert — değişmedi, aynı mantık
+    // Upsert 
     // ============================
 
     private Location upsertLocation(OcpiLocationDto dto) {
@@ -169,13 +169,7 @@ public class OcpiLocationPersistenceService {
         evse.setEvseId(dto.getEvseId());
         evse.setLocation(location);
 
-        /*
-         * Yeni EVSE ise henüz bir ChargingSession
-         * bulunamaz.
-         *
-         * Bu durumda OCPI'den gelen status doğrudan
-         * kullanılabilir.
-         */
+       
         if (evse.getId() == null) {
 
             evse.setStatus(
@@ -184,10 +178,7 @@ public class OcpiLocationPersistenceService {
             return evseRepository.save(evse);
         }
 
-        /*
-         * Mevcut EVSE için aktif bir ChargingSession
-         * olup olmadığını kontrol ediyoruz.
-         */
+       
         boolean hasActiveSession = chargingSessionRepository
                 .existsByConnectorEvseIdAndStatusIn(
                         evse.getId(),
@@ -196,12 +187,7 @@ public class OcpiLocationPersistenceService {
                                 SessionStatus.CHARGING,
                                 SessionStatus.COMPLETED));
 
-        /*
-         * Aktif session varsa EVSE durumu bizim
-         * session lifecycle'ımız tarafından yönetiliyor.
-         *
-         * OCPI scheduler bu durumu ezmemeli.
-         */
+       
         if (!hasActiveSession) {
 
             evse.setStatus(
@@ -233,7 +219,7 @@ public class OcpiLocationPersistenceService {
     }
 
     // ============================
-    // Enum Eşleme — değişmedi
+    // Enum Eşleme 
     // ============================
 
     private EvseStatus mapEvseStatus(String ocpiStatus) {
