@@ -291,7 +291,8 @@ takip edilebilir ve yönetilebilir.
 
 Dashboard üzerinde sistem kullanımına ilişkin temel bilgiler özet olarak sunulur.
 
-<img width="1889" height="863" alt="image" src="https://github.com/user-attachments/assets/e51e4d56-7943-4733-9203-2af6eb7159aa" />
+<img width="1878" height="865" alt="image" src="https://github.com/user-attachments/assets/8c3ed107-9142-4ae5-a333-8c4e2af11a85" />
+
 
 
 <img width="1876" height="674" alt="image" src="https://github.com/user-attachments/assets/918f22cd-c278-4ede-9d25-712f45cbb092" />
